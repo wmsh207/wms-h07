@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entrada Real-Time | WMS H-07</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <script type="module">
+    // Puxa a conexão do nosso arquivo central!
+    import { db } from './config.js';
+    import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    window.salvarNoFirebase = async (dados) => {
+        return await addDoc(collection(db, "inventario"), {
+            ...dados,
+            data_hora: serverTimestamp(),
+            status_item: "No Pallet"
+        });
+    };
+</script>
+
+    <script src="https://unpkg.com/html5-qrcode"></script>
+
+    <style>
+        body { background-color: #f8f9fa; }
+        .app-header { background-color: #0d6efd; color: white; padding: 15px 0; }
+        #reader { width: 100%; border-radius: 12px; overflow: hidden; border: none !important; }
+    </style>
+</head>
+<body>
+
+    <header class="app-header mb-4 shadow-sm">
+        <div class="container d-flex align-items-center">
+            <a href="index.html" class="text-white me-3"><i class="bi bi-arrow-left fs-3"></i></a>
+            <h4 class="m-0">Entrada Real-Time</h4>
+        </div>
+    </header>
+
+    <div class="container">
+        <div id="reader" class="mb-4"></div>
+
+        <div class="card border-0 shadow-sm mb-5">
+            <div class="card-body">
+                <form id="formEntrada">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-secondary">GTIN / CÓDIGO</label>
+                        <input type="text" class="form-control form-control-lg" id="inputGtin" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-secondary">PRODUTO</label>
+                        <input type="text" class="form-control" id="inputNome" placeholder="Bipe para identificar..." required>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-secondary">VAGA DE DESTINO</label>
+                        <select class="form-select form-select-lg" id="inputVaga" required>
+                            <option value="" disabled selected>Escolha a vaga...</option>
+                            <option value="A-1-1-1">A-1-1-1</option>
+                            <option value="A-1-1-2">A-1-1-2</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg w-100 py-3 shadow" id="btnSalvar">
+                        <i class="bi bi-lightning-fill"></i> SALVAR INSTANTÂNEO
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Lógica da Câmera
+        function onScanSuccess(decodedText) {
+            document.getElementById('inputGtin').value = decodedText;
+            if(navigator.vibrate) navigator.vibrate(100);
+            // Aqui poderíamos ter uma lógica para buscar o nome do produto também no Firestore
+        }
+
+        let html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 15, qrbox: {width: 250, height: 120} });
+        html5QrcodeScanner.render(onScanSuccess);
+
+        // Lógica de Envio
+        document.getElementById('formEntrada').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btnSalvar');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> PROCESSANDO...';
+
+            const dados = {
+                gtin: document.getElementById('inputGtin').value,
+                nome: document.getElementById('inputNome').value,
+                vaga: document.getElementById('inputVaga').value
+            };
+
+            try {
+                await window.salvarNoFirebase(dados);
+                alert("Confirmado! O dado já está no servidor.");
+                document.getElementById('formEntrada').reset();
+            } catch (erro) {
+                alert("Erro ao gravar: " + erro.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-lightning-fill"></i> SALVAR INSTANTÂNEO';
+            }
+        });
+    </script>
+</body>
+</html>
