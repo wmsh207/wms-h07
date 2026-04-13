@@ -9,18 +9,61 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     
     <script type="module">
-    // Puxa a conexão do nosso arquivo central!
-    import { db } from './config.js';
-    import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { db } from './config.js';
+        import { collection, addDoc, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    window.salvarNoFirebase = async (dados) => {
-        return await addDoc(collection(db, "inventario"), {
-            ...dados,
-            data_hora: serverTimestamp(),
-            status_item: "No Pallet"
-        });
-    };
-</script>
+        let bancoProdutos = {};
+
+        // 1. PUXA AS VAGAS E PRODUTOS QUANDO A TELA ABRE
+        window.onload = async () => {
+            const btn = document.getElementById('btnSalvar');
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Carregando Banco...';
+            btn.disabled = true;
+
+            try {
+                // Carrega Vagas
+                const vagasRef = await getDocs(collection(db, "vagas"));
+                const selectVaga = document.getElementById('inputVaga');
+                selectVaga.innerHTML = '<option value="" disabled selected>Escolha a vaga...</option>';
+                vagasRef.forEach((doc) => {
+                    selectVaga.innerHTML += `<option value="${doc.id}">${doc.id}</option>`;
+                });
+
+                // Carrega Produtos
+                const produtosRef = await getDocs(collection(db, "produtos"));
+                produtosRef.forEach((doc) => {
+                    bancoProdutos[doc.id] = doc.data().nome;
+                });
+
+                btn.innerHTML = '<i class="bi bi-lightning-fill"></i> SALVAR INSTANTÂNEO';
+                btn.disabled = false;
+            } catch (erro) {
+                console.error("Erro ao puxar dados: ", erro);
+                alert("Erro de conexão com o banco de dados.");
+            }
+        };
+
+        // 2. FUNÇÃO DA LUPA (Busca o nome digitado)
+        window.buscarNome = () => {
+            const gtin = String(document.getElementById('inputGtin').value).trim();
+            const campoNome = document.getElementById('inputNome');
+            
+            if (bancoProdutos[gtin]) {
+                campoNome.value = bancoProdutos[gtin];
+            } else if (gtin.length > 5) {
+                campoNome.value = "NÃO ENCONTRADO NO FIREBASE";
+            }
+        };
+
+        // 3. GRAVAR NO ESTOQUE
+        window.salvarNoFirebase = async (dados) => {
+            return await addDoc(collection(db, "inventario"), {
+                ...dados,
+                data_hora: serverTimestamp(),
+                status_item: "No Pallet"
+            });
+        };
+    </script>
 
     <script src="https://unpkg.com/html5-qrcode"></script>
 
@@ -40,32 +83,33 @@
     </header>
 
     <div class="container">
-        <div id="reader" class="mb-4"></div>
+        <div id="reader" class="mb-4 shadow-sm"></div>
 
         <div class="card border-0 shadow-sm mb-5">
             <div class="card-body">
                 <form id="formEntrada">
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-secondary">GTIN / CÓDIGO</label>
-                        <input type="text" class="form-control form-control-lg" id="inputGtin" required>
+                        <div class="input-group">
+                            <input type="number" class="form-control form-control-lg" id="inputGtin" required onkeyup="window.buscarNome()">
+                            <button class="btn btn-outline-secondary" type="button" onclick="window.buscarNome()"><i class="bi bi-search"></i></button>
+                        </div>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-secondary">PRODUTO</label>
-                        <input type="text" class="form-control" id="inputNome" placeholder="Bipe para identificar..." required>
+                        <input type="text" class="form-control bg-light" id="inputNome" placeholder="Aguardando código..." readonly required>
                     </div>
 
                     <div class="mb-4">
                         <label class="form-label small fw-bold text-secondary">VAGA DE DESTINO</label>
                         <select class="form-select form-select-lg" id="inputVaga" required>
-                            <option value="" disabled selected>Escolha a vaga...</option>
-                            <option value="A-1-1-1">A-1-1-1</option>
-                            <option value="A-1-1-2">A-1-1-2</option>
+                            <option value="" disabled selected>Carregando vagas...</option>
                         </select>
                     </div>
 
-                    <button type="submit" class="btn btn-primary btn-lg w-100 py-3 shadow" id="btnSalvar">
-                        <i class="bi bi-lightning-fill"></i> SALVAR INSTANTÂNEO
+                    <button type="submit" class="btn btn-primary btn-lg w-100 py-3 shadow" id="btnSalvar" disabled>
+                        <span class="spinner-border spinner-border-sm"></span> Aguarde...
                     </button>
                 </form>
             </div>
@@ -77,13 +121,17 @@
         function onScanSuccess(decodedText) {
             document.getElementById('inputGtin').value = decodedText;
             if(navigator.vibrate) navigator.vibrate(100);
-            // Aqui poderíamos ter uma lógica para buscar o nome do produto também no Firestore
+            window.buscarNome(); // Já puxa o nome na hora do bipe!
+            
+            // Pausa breve para não bipar 10x seguidas
+            html5QrcodeScanner.pause();
+            setTimeout(() => html5QrcodeScanner.resume(), 3000);
         }
 
-        let html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 15, qrbox: {width: 250, height: 120} });
+        let html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 15, qrbox: {width: 250, height: 120} }, false);
         html5QrcodeScanner.render(onScanSuccess);
 
-        // Lógica de Envio
+        // Disparo do Formulário
         document.getElementById('formEntrada').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btnSalvar');
@@ -98,7 +146,7 @@
 
             try {
                 await window.salvarNoFirebase(dados);
-                alert("Confirmado! O dado já está no servidor.");
+                alert("Salvo com sucesso!");
                 document.getElementById('formEntrada').reset();
             } catch (erro) {
                 alert("Erro ao gravar: " + erro.message);
