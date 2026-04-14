@@ -3,105 +3,199 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Consulta Real-Time | WMS H-07</title>
+    <title>Consulta de Estoque | WMS</title>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     
-    <script type="module">
-    // Puxa a conexão do nosso arquivo central!
-    import { db } from './config.js';
-    import { collection, query, where, onSnapshot, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-    let estoqueLocal = [];
-
-    const q = query(collection(db, "inventario"), where("status_item", "==", "No Pallet"));
-    
-    onSnapshot(q, (snapshot) => {
-        estoqueLocal = [];
-        snapshot.forEach((doc) => {
-            estoqueLocal.push({ id: doc.id, ...doc.data() });
-        });
-        renderizarLista(estoqueLocal);
-        document.getElementById('statusSinc').innerHTML = `<i class="bi bi-check-all text-success"></i> Sincronizado (${estoqueLocal.length})`;
-    });
-
-    window.darBaixa = async (idDocumento) => {
-        if(confirm("Deseja remover este produto da vaga?")) {
-            const docRef = doc(db, "inventario", idDocumento);
-            await updateDoc(docRef, { status_item: "Removido", data_saida: serverTimestamp() });
-        }
-    };
-
-    window.filtrar = () => {
-        const termo = document.getElementById('inputBusca').value.toLowerCase();
-        const filtrados = estoqueLocal.filter(item => 
-            item.nome.toLowerCase().includes(termo) || item.gtin.includes(termo)
-        );
-        renderizarLista(filtrados);
-    };
-</script>
-
     <style>
-        body { background-color: #f0f2f5; }
-        .app-header { background-color: #198754; color: white; padding: 15px 0; }
-        .search-container { position: sticky; top: 0; z-index: 100; background: #f0f2f5; padding-top: 10px; }
-        .item-card { border-radius: 12px; border: none; border-left: 6px solid #198754; transition: 0.3s; }
-        .vaga-badge { background-color: #e8f5e9; color: #1b5e20; font-weight: bold; padding: 8px 12px; border-radius: 8px; }
+        body { background-color: #f4f6f9; }
+        .app-header { background-color: #198754; color: white; padding: 15px 0; } /* Verde para a Consulta */
+        .search-box { background: white; border-radius: 8px; padding: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .resultado-item { cursor: pointer; transition: background-color 0.2s; border-left: 4px solid transparent; }
+        .resultado-item:hover { background-color: #f8f9fa; border-left: 4px solid #198754; }
+        .vaga-card { background-color: #e8f5e9; border: 1px solid #c8e6c9; border-radius: 8px; }
+        
+        /* Ocultar barra de rolagem mas manter funcionamento */
+        .lista-produtos { max-height: 40vh; overflow-y: auto; }
+        .lista-produtos::-webkit-scrollbar { width: 6px; }
+        .lista-produtos::-webkit-scrollbar-thumb { background-color: #ccc; border-radius: 4px; }
     </style>
 </head>
 <body>
 
-    <header class="app-header mb-3 shadow-sm text-center">
+    <header class="app-header text-center mb-4">
         <div class="container d-flex justify-content-between align-items-center">
-            <a href="index.html" class="text-white"><i class="bi bi-arrow-left fs-3"></i></a>
-            <h4 class="m-0">Consulta H-07</h4>
-            <div id="statusSinc" class="small">Conectando...</div>
+            <button class="btn btn-outline-light btn-sm" onclick="window.location.href='index.html'"><i class="bi bi-arrow-left"></i> Voltar</button>
+            <h4 class="m-0"><i class="bi bi-search"></i> Consulta</h4>
+            <div style="width: 65px;"></div>
         </div>
     </header>
 
     <div class="container">
-        <div class="search-container mb-4">
-            <div class="input-group input-group-lg shadow-sm">
-                <span class="input-group-text bg-white border-0"><i class="bi bi-search"></i></span>
-                <input type="text" class="form-control border-0" id="inputBusca" placeholder="Nome ou GTIN..." onkeyup="window.filtrar()">
+        <div class="search-box mb-4">
+            <div class="input-group">
+                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                <input type="text" class="form-control border-start-0 form-control-lg" id="campo-busca" placeholder="Digite o nome ou bipe o código..." autofocus>
             </div>
+            <div id="qtd-resultados" class="form-text mt-2 text-end text-muted small"></div>
         </div>
 
-        <div id="listaEstoque" class="row g-3">
+        <div class="list-group lista-produtos shadow-sm mb-4" id="lista-resultados">
             </div>
+
+        <div id="painel-vagas" class="card shadow-sm border-0 d-none">
+            <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
+                <h5 class="fw-bold text-success mb-1" id="titulo-produto-selecionado">Produto Selecionado</h5>
+                <p class="text-muted small mb-3">Código: <span id="gtin-selecionado"></span></p>
+                <hr>
+            </div>
+            <div class="card-body pt-0">
+                <h6 class="fw-bold mb-3"><i class="bi bi-geo-alt-fill text-danger"></i> Localização Atual:</h6>
+                
+                <div id="status-busca-firebase" class="text-center py-3">
+                    <div class="spinner-border text-success" role="status"></div>
+                    <p class="mt-2 text-muted">Buscando nos corredores...</p>
+                </div>
+
+                <div id="lista-vagas" class="row g-2">
+                    </div>
+            </div>
+        </div>
     </div>
 
-    <script>
-        function renderizarLista(lista) {
-            const container = document.getElementById('listaEstoque');
-            container.innerHTML = "";
+    <script src="dados.js"></script>
 
-            if (lista.length === 0) {
-                container.innerHTML = `<div class="text-center mt-5 text-muted">Nenhum produto nas vagas.</div>`;
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        // IMPORTANTE: Adicionamos o 'query' e o 'where' para buscar só o que queremos
+        import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        // COLE SUAS CHAVES DO FIREBASE AQUI
+        const firebaseConfig = {
+            apiKey: "AIzaSyA_i9BkvMFIXxTTtJA6dyFc2HLXKP-TmHU",
+            authDomain: "wms-h7.firebaseapp.com",
+            projectId: "wms-h7",
+            storageBucket: "wms-h7.firebasestorage.app",
+            messagingSenderId: "274655939351",
+            appId: "1:274655939351:web:533f7b66d3f421596b8552"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Mapeando a tela
+        const campoBusca = document.getElementById('campo-busca');
+        const listaResultados = document.getElementById('lista-resultados');
+        const qtdResultados = document.getElementById('qtd-resultados');
+        
+        const painelVagas = document.getElementById('painel-vagas');
+        const tituloProduto = document.getElementById('titulo-produto-selecionado');
+        const spanGtin = document.getElementById('gtin-selecionado');
+        const listaVagas = document.getElementById('lista-vagas');
+        const statusBusca = document.getElementById('status-busca-firebase');
+
+        // Transformar o catálogo do dados.js em um array para facilitar a busca
+        const arrayProdutos = Object.entries(catalogoProdutos).map(([gtin, nome]) => ({ gtin, nome }));
+
+        // SISTEMA DE BUSCA LOCAL (Extremamente Rápido)
+        campoBusca.addEventListener('input', (e) => {
+            const termo = e.target.value.trim().toLowerCase();
+            listaResultados.innerHTML = ''; // Limpa a lista
+            painelVagas.classList.add('d-none'); // Esconde as vagas se estiver buscando outro
+            
+            if (termo.length < 3) {
+                qtdResultados.innerText = "Digite pelo menos 3 caracteres...";
                 return;
             }
 
-            lista.forEach(item => {
-                container.innerHTML += `
-                    <div class="col-12">
-                        <div class="card item-card shadow-sm">
-                            <div class="card-body d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="mb-1 text-uppercase fw-bold">${item.nome}</h6>
-                                    <small class="text-muted d-block">GTIN: ${item.gtin}</small>
-                                </div>
-                                <div class="text-end">
-                                    <div class="vaga-badge mb-2"><i class="bi bi-geo-alt"></i> ${item.vaga}</div>
-                                    <button class="btn btn-sm btn-outline-danger border-0" onclick="window.darBaixa('${item.id}')">
-                                        <i class="bi bi-trash"></i> Baixa
-                                    </button>
-                                </div>
+            // Filtra no JavaScript (Zero Firebase)
+            const filtrados = arrayProdutos.filter(p => 
+                p.nome.toLowerCase().includes(termo) || p.gtin.includes(termo)
+            ).slice(0, 15); // Mostra no máximo 15 para não travar a tela do celular
+
+            qtdResultados.innerText = filtrados.length > 0 ? `${filtrados.length} encontrados` : "Nenhum produto encontrado.";
+
+            // Desenha os resultados na tela
+            filtrados.forEach(produto => {
+                const btn = document.createElement('button');
+                btn.className = 'list-group-item list-group-item-action resultado-item py-3';
+                btn.innerHTML = `
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1 fw-bold">${produto.nome}</h6>
+                    </div>
+                    <small class="text-muted"><i class="bi bi-upc"></i> ${produto.gtin}</small>
+                `;
+                
+                // Quando clicar em um produto, vai no Firebase procurar onde está
+                btn.onclick = () => buscarVagasNoFirebase(produto.gtin, produto.nome);
+                listaResultados.appendChild(btn);
+            });
+        });
+
+        // SISTEMA DE TIRO DE PRECISÃO NO FIREBASE
+        async function buscarVagasNoFirebase(gtin, nome) {
+            // Arruma a interface
+            listaResultados.innerHTML = ''; // Esconde a pesquisa
+            campoBusca.value = '';
+            qtdResultados.innerText = '';
+            
+            tituloProduto.innerText = nome;
+            spanGtin.innerText = gtin;
+            
+            painelVagas.classList.remove('d-none');
+            listaVagas.innerHTML = '';
+            statusBusca.style.display = 'block';
+
+            try {
+                // A MÁGICA DA ECONOMIA: Pede ao Firebase apenas as linhas desse GTIN que estão ocupadas
+                const q = query(
+                    collection(db, "inventario_ativo"), 
+                    where("gtin", "==", gtin),
+                    where("status", "==", "ocupada")
+                );
+
+                const querySnapshot = await getDocs(q);
+
+                statusBusca.style.display = 'none';
+
+                if (querySnapshot.empty) {
+                    listaVagas.innerHTML = `
+                        <div class="col-12">
+                            <div class="alert alert-warning text-center border-0 py-4 mb-0">
+                                <i class="bi bi-inboxes display-4 d-block mb-2 text-warning"></i>
+                                <strong>Sem Estoque</strong><br>Este produto não está alocado em nenhuma vaga no momento.
+                            </div>
+                        </div>`;
+                    return;
+                }
+
+                // Desenha os cartões verdes com as vagas
+                querySnapshot.forEach((doc) => {
+                    const dados = doc.data();
+                    
+                    // Formata a data (se existir)
+                    let dataFormatada = "Recentemente";
+                    if(dados.data_entrada) {
+                        const data = dados.data_entrada.toDate();
+                        dataFormatada = data.toLocaleDateString('pt-BR') + ' às ' + data.toLocaleTimeString('pt-BR').substring(0,5);
+                    }
+
+                    listaVagas.innerHTML += `
+                        <div class="col-6 col-md-4">
+                            <div class="vaga-card p-3 text-center h-100 shadow-sm">
+                                <h3 class="fw-bold text-success m-0">${dados.vaga_id}</h3>
+                                <small class="text-muted d-block mt-2"><i class="bi bi-clock-history"></i> ${dataFormatada}</small>
                             </div>
                         </div>
-                    </div>
-                `;
-            });
+                    `;
+                });
+
+            } catch (error) {
+                console.error("Erro na busca: ", error);
+                statusBusca.style.display = 'none';
+                listaVagas.innerHTML = `<div class="alert alert-danger w-100"><i class="bi bi-exclamation-triangle"></i> Falha ao conectar com o servidor.</div>`;
+            }
         }
     </script>
 </body>

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estrutura Física H-07 | WMS</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <style>
+        body { background-color: #e9ecef; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .app-header { background-color: #212529; color: white; padding: 15px 0; }
+        
+        .corredor-wrapper { background: white; border-radius: 10px; padding: 20px; margin-bottom: 30px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .corredor-titulo { border-bottom: 3px solid #0d6efd; padding-bottom: 10px; margin-bottom: 20px; font-weight: 900; color: #212529; display: inline-block; }
+        .porta-pallets-scroll { display: flex; overflow-x: auto; padding-bottom: 15px; gap: 8px; }
+        .porta-pallets-scroll::-webkit-scrollbar { height: 10px; }
+        .porta-pallets-scroll::-webkit-scrollbar-thumb { background-color: #adb5bd; border-radius: 5px; }
+
+        .modulo { display: flex; flex-direction: column; border-left: 5px solid #2980b9; border-right: 5px solid #2980b9; background-color: #f8f9fa; min-width: 150px; }
+        .modulo-header { background-color: #212529; color: #ffc107; text-align: center; font-size: 13px; font-weight: 900; padding: 4px 0; border-bottom: 2px solid #2980b9; }
+        .nivel { display: flex; justify-content: space-around; align-items: flex-end; height: 55px; border-bottom: 5px solid #e67e22; padding: 0 5px; padding-bottom: 2px; position: relative; }
+        .nivel-tag { position: absolute; left: -22px; bottom: 2px; font-size: 10px; font-weight: bold; color: #2980b9; }
+
+        .vaga-pallet {
+            width: 44%; height: 38px; border-radius: 3px; display: flex; align-items: center; justify-content: center;
+            font-size: 10px; font-weight: bold; color: transparent; cursor: pointer; transition: all 0.2s; position: relative;
+        }
+        
+        .vaga-pallet.status-ocupada { background-color: #dc3545; border-bottom: 4px solid #8B4513; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .vaga-pallet.status-livre { background-color: transparent; border: 1px dashed #ced4da; }
+        .vaga-pallet:hover { transform: scale(1.1); color: white; z-index: 10; }
+        .vaga-pallet.status-livre:hover { background-color: #198754; border-color: #198754; }
+
+        .legenda-caixa { font-size: 13px; background: white; border-radius: 8px; border-left: 5px solid #ffc107; }
+        .quadradinho { width: 15px; height: 15px; display: inline-block; border-radius: 2px; vertical-align: middle; }
+    </style>
+</head>
+<body>
+
+    <header class="app-header text-center mb-3">
+        <div class="container d-flex justify-content-between align-items-center">
+            <button class="btn btn-outline-light btn-sm" onclick="window.location.href='index.html'"><i class="bi bi-arrow-left"></i> Voltar</button>
+            <h4 class="m-0 fw-bold"><i class="bi bi-building"></i> Estrutura Física H-07</h4>
+            <div style="width: 70px;"></div> 
+        </div>
+    </header>
+
+    <div class="container-fluid px-4 mb-4">
+        <div class="legenda-caixa p-3 shadow-sm d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div class="d-flex gap-4">
+                <span><span class="quadradinho" style="border: 1px dashed #999;"></span> Vaga Livre</span>
+                <span><span class="quadradinho bg-danger" style="border-bottom: 3px solid #8B4513;"></span> Pallet Alocado</span>
+            </div>
+            <button id="btn-atualizar" class="btn btn-primary shadow-sm fw-bold">
+                <i class="bi bi-arrow-clockwise"></i> Escanear Depósito
+            </button>
+        </div>
+    </div>
+
+    <div id="mapa-visual" class="container-fluid px-4"></div>
+
+    <div class="modal fade" id="modalVaga" tabindex="-1" aria-labelledby="modalVagaLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-dark text-white border-bottom-0">
+                    <h5 class="modal-title fw-bold" id="modalVagaLabel"><i class="bi bi-geo-alt-fill text-warning"></i> Detalhes da Vaga: <span id="vaga-id-titulo"></span></h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body bg-light" id="modal-conteudo">
+                    </div>
+                <div class="modal-footer border-top-0">
+                    <button type="button" class="btn btn-secondary w-100 fw-bold" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="dados.js"></script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        // ⚠️ COLE SUAS CHAVES DO FIREBASE AQUI
+        const firebaseConfig = {
+            apiKey: "AIzaSyA_i9BkvMFIXxTTtJA6dyFc2HLXKP-TmHU",
+            authDomain: "wms-h7.firebaseapp.com",
+            projectId: "wms-h7",
+            storageBucket: "wms-h7.firebasestorage.app",
+            messagingSenderId: "274655939351",
+            appId: "1:274655939351:web:533f7b66d3f421596b8552"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const container = document.getElementById('mapa-visual');
+        const btnAtualizar = document.getElementById('btn-atualizar');
+        
+        // Elementos do Modal
+        const modalElement = new bootstrap.Modal(document.getElementById('modalVaga'));
+        const vagaIdTitulo = document.getElementById('vaga-id-titulo');
+        const modalConteudo = document.getElementById('modal-conteudo');
+
+        // BANCO DE DADOS TEMPORÁRIO NA MEMÓRIA
+        let conteudoDasVagas = {};
+
+        // Função que é chamada ao clicar em uma vaga
+        window.abrirDetalhesVaga = function(idVaga) {
+            vagaIdTitulo.innerText = idVaga;
+            
+            // Se a vaga tiver itens no nosso dicionário de memória
+            if (conteudoDasVagas[idVaga] && conteudoDasVagas[idVaga].length > 0) {
+                let htmlItens = '<div class="list-group shadow-sm">';
+                
+                conteudoDasVagas[idVaga].forEach(item => {
+                    const nomeProduto = catalogoProdutos[item.gtin] || "Produto Não Cadastrado";
+                    
+                    // Formata a data se existir
+                    let dataFormatada = "Data não registrada";
+                    if(item.data_entrada && item.data_entrada.toDate) {
+                        const d = item.data_entrada.toDate();
+                        dataFormatada = d.toLocaleDateString('pt-BR') + ' às ' + d.toLocaleTimeString('pt-BR').substring(0,5);
+                    }
+
+                    htmlItens += `
+                        <div class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1 fw-bold text-dark">${nomeProduto}</h6>
+                            </div>
+                            <p class="mb-1 text-muted small"><i class="bi bi-upc"></i> ${item.gtin}</p>
+                            <small class="text-success fw-bold"><i class="bi bi-clock-history"></i> Entrou: ${dataFormatada}</small>
+                        </div>
+                    `;
+                });
+                
+                htmlItens += '</div>';
+                modalConteudo.innerHTML = htmlItens;
+            } else {
+                // Se estiver vazia
+                modalConteudo.innerHTML = `
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-box-seam display-4 d-block mb-3 text-secondary opacity-50"></i>
+                        <h5 class="fw-bold">Vaga Vazia</h5>
+                        <p class="mb-0">Não há pallets alocados nesta posição no momento.</p>
+                    </div>
+                `;
+            }
+            
+            // Abre a janela flutuante
+            modalElement.show();
+        };
+
+        async function desenharMapaRealista() {
+            const textoOriginal = btnAtualizar.innerHTML;
+            btnAtualizar.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Lendo Estrutura...';
+            btnAtualizar.disabled = true;
+            container.innerHTML = '';
+            
+            // Limpa a memória toda vez que atualiza o mapa
+            conteudoDasVagas = {};
+
+            const mapaHierarquico = {};
+
+            Object.keys(estruturaDeposito).forEach(corredor => {
+                mapaHierarquico[corredor] = {};
+                estruturaDeposito[corredor].forEach(idVaga => {
+                    const partes = idVaga.split('-'); 
+                    const mod = parseInt(partes[1]);
+                    const niv = parseInt(partes[2]);
+                    if (!mapaHierarquico[corredor][mod]) mapaHierarquico[corredor][mod] = {};
+                    if (!mapaHierarquico[corredor][mod][niv]) mapaHierarquico[corredor][mod][niv] = [];
+                    mapaHierarquico[corredor][mod][niv].push(idVaga);
+                });
+            });
+
+            Object.keys(mapaHierarquico).sort().forEach(letraCorredor => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'corredor-wrapper';
+                wrapper.innerHTML = `<h3 class="corredor-titulo">Corredor ${letraCorredor}</h3>`;
+                
+                const scrollArea = document.createElement('div');
+                scrollArea.className = 'porta-pallets-scroll';
+
+                const modulos = mapaHierarquico[letraCorredor];
+                const modulosOrdenados = Object.keys(modulos).sort((a, b) => a - b);
+
+                modulosOrdenados.forEach(modNum => {
+                    const moduloDiv = document.createElement('div');
+                    moduloDiv.className = 'modulo';
+                    moduloDiv.innerHTML = `<div class="modulo-header">${letraCorredor}-${modNum}</div>`;
+
+                    const niveis = modulos[modNum];
+                    const niveisOrdenadosDesc = Object.keys(niveis).sort((a, b) => b - a);
+
+                    niveisOrdenadosDesc.forEach(nivNum => {
+                        const nivelDiv = document.createElement('div');
+                        nivelDiv.className = 'nivel';
+                        nivelDiv.innerHTML = `<div class="nivel-tag">N${nivNum}</div>`;
+
+                        niveis[nivNum].sort().forEach(idVaga => {
+                            const vagaDiv = document.createElement('div');
+                            vagaDiv.className = `vaga-pallet status-livre`; 
+                            vagaDiv.id = `vaga-${idVaga}`;
+                            const posicaoFinal = idVaga.split('-')[3]; 
+                            vagaDiv.innerText = posicaoFinal;
+                            vagaDiv.title = `Clique para ver detalhes`;
+                            
+                            // AQUI ESTÁ A MÁGICA: Adiciona o clique na vaga!
+                            vagaDiv.onclick = () => window.abrirDetalhesVaga(idVaga);
+                            
+                            nivelDiv.appendChild(vagaDiv);
+                        });
+                        moduloDiv.appendChild(nivelDiv);
+                    });
+                    scrollArea.appendChild(moduloDiv);
+                });
+                wrapper.appendChild(scrollArea);
+                container.appendChild(wrapper);
+            });
+
+            try {
+                const q = query(collection(db, "inventario_ativo"), where("status", "==", "ocupada"));
+                const querySnapshot = await getDocs(q);
+                
+                querySnapshot.forEach((doc) => {
+                    const item = doc.data();
+                    
+                    // Salva a informação na nossa memória temporária (aceita múltiplos pallets na mesma vaga)
+                    if (!conteudoDasVagas[item.vaga_id]) conteudoDasVagas[item.vaga_id] = [];
+                    conteudoDasVagas[item.vaga_id].push(item);
+
+                    const vagaNaTela = document.getElementById(`vaga-${item.vaga_id}`);
+                    if (vagaNaTela) {
+                        vagaNaTela.classList.remove('status-livre');
+                        vagaNaTela.classList.add('status-ocupada');
+                    }
+                });
+            } catch (error) {
+                console.error(error);
+            } finally {
+                btnAtualizar.innerHTML = textoOriginal;
+                btnAtualizar.disabled = false;
+            }
+        }
+
+        btnAtualizar.addEventListener('click', desenharMapaRealista);
+        desenharMapaRealista();
+    </script>
+</body>
+</html>

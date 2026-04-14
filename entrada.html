@@ -3,156 +3,177 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Entrada Real-Time | WMS H-07</title>
+    <title>Nova Movimentação | WMS</title>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     
-    <script type="module">
-        import { db } from './config.js';
-        import { collection, addDoc, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-        let bancoProdutos = {};
-
-        // 1. PUXA AS VAGAS E PRODUTOS QUANDO A TELA ABRE
-        window.onload = async () => {
-            const btn = document.getElementById('btnSalvar');
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Carregando Banco...';
-            btn.disabled = true;
-
-            try {
-                // Carrega Vagas
-                const vagasRef = await getDocs(collection(db, "vagas"));
-                const selectVaga = document.getElementById('inputVaga');
-                selectVaga.innerHTML = '<option value="" disabled selected>Escolha a vaga...</option>';
-                vagasRef.forEach((doc) => {
-                    selectVaga.innerHTML += `<option value="${doc.id}">${doc.id}</option>`;
-                });
-
-                // Carrega Produtos
-                const produtosRef = await getDocs(collection(db, "produtos"));
-                produtosRef.forEach((doc) => {
-                    bancoProdutos[doc.id] = doc.data().nome;
-                });
-
-                btn.innerHTML = '<i class="bi bi-lightning-fill"></i> SALVAR INSTANTÂNEO';
-                btn.disabled = false;
-            } catch (erro) {
-                console.error("Erro ao puxar dados: ", erro);
-                alert("Erro de conexão com o banco de dados.");
-            }
-        };
-
-        // 2. FUNÇÃO DA LUPA (Busca o nome digitado)
-        window.buscarNome = () => {
-            const gtin = String(document.getElementById('inputGtin').value).trim();
-            const campoNome = document.getElementById('inputNome');
-            
-            if (bancoProdutos[gtin]) {
-                campoNome.value = bancoProdutos[gtin];
-            } else if (gtin.length > 5) {
-                campoNome.value = "NÃO ENCONTRADO NO FIREBASE";
-            }
-        };
-
-        // 3. GRAVAR NO ESTOQUE
-        window.salvarNoFirebase = async (dados) => {
-            return await addDoc(collection(db, "inventario"), {
-                ...dados,
-                data_hora: serverTimestamp(),
-                status_item: "No Pallet"
-            });
-        };
-    </script>
-
-    <script src="https://unpkg.com/html5-qrcode"></script>
-
     <style>
-        body { background-color: #f8f9fa; }
+        body { background-color: #f4f6f9; }
         .app-header { background-color: #0d6efd; color: white; padding: 15px 0; }
-        #reader { width: 100%; border-radius: 12px; overflow: hidden; border: none !important; }
+        .form-control:focus { border-color: #0d6efd; box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25); }
+        .readonly-field { background-color: #e9ecef; cursor: not-allowed; }
     </style>
 </head>
 <body>
 
-    <header class="app-header mb-4 shadow-sm">
-        <div class="container d-flex align-items-center">
-            <a href="index.html" class="text-white me-3"><i class="bi bi-arrow-left fs-3"></i></a>
-            <h4 class="m-0">Entrada Real-Time</h4>
-        </div>
+    <header class="app-header text-center mb-4">
+        <div class="container d-flex justify-content-between align-items-center">
+            <button class="btn btn-outline-light btn-sm" onclick="window.location.href='index.html'"><i class="bi bi-arrow-left"></i> Voltar</button>
+            <h4 class="m-0"><i class="bi bi-box-arrow-in-right"></i> Entrada</h4>
+            <div style="width: 65px;"></div> </div>
     </header>
 
     <div class="container">
-        <div id="reader" class="mb-4 shadow-sm"></div>
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                
+                <div id="alerta-sistema" class="alert d-none" role="alert"></div>
 
-        <div class="card border-0 shadow-sm mb-5">
-            <div class="card-body">
-                <form id="formEntrada">
+                <form id="form-entrada">
+                    
                     <div class="mb-3">
-                        <label class="form-label small fw-bold text-secondary">GTIN / CÓDIGO</label>
+                        <label for="gtin" class="form-label fw-bold text-secondary">Código de Barras (GTIN)</label>
                         <div class="input-group">
-                            <input type="number" class="form-control form-control-lg" id="inputGtin" required onkeyup="window.buscarNome()">
-                            <button class="btn btn-outline-secondary" type="button" onclick="window.buscarNome()"><i class="bi bi-search"></i></button>
+                            <span class="input-group-text"><i class="bi bi-upc-scan"></i></span>
+                            <input type="number" class="form-control form-control-lg" id="gtin" placeholder="Bipe ou digite..." required autofocus>
                         </div>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label small fw-bold text-secondary">PRODUTO</label>
-                        <input type="text" class="form-control bg-light" id="inputNome" placeholder="Aguardando código..." readonly required>
+                        <label for="nomeProduto" class="form-label fw-bold text-secondary">Produto</label>
+                        <input type="text" class="form-control readonly-field" id="nomeProduto" placeholder="Aguardando código..." readonly>
                     </div>
 
                     <div class="mb-4">
-                        <label class="form-label small fw-bold text-secondary">VAGA DE DESTINO</label>
-                        <select class="form-select form-select-lg" id="inputVaga" required>
-                            <option value="" disabled selected>Carregando vagas...</option>
-                        </select>
+                        <label for="vaga" class="form-label fw-bold text-secondary">Vaga de Destino</label>
+                        <input type="text" class="form-control form-control-lg text-uppercase" id="vaga" placeholder="Ex: A-1-1-1" required>
+                        <div id="vaga-erro" class="text-danger small mt-1 d-none"><i class="bi bi-exclamation-triangle"></i> Vaga não existe no depósito!</div>
                     </div>
 
-                    <button type="submit" class="btn btn-primary btn-lg w-100 py-3 shadow" id="btnSalvar" disabled>
-                        <span class="spinner-border spinner-border-sm"></span> Aguarde...
+                    <button type="submit" class="btn btn-primary btn-lg w-100" id="btn-salvar" disabled>
+                        <i class="bi bi-cloud-arrow-up"></i> Confirmar Entrada
                     </button>
+
                 </form>
             </div>
         </div>
     </div>
 
-    <script>
-        // Lógica da Câmera
-        function onScanSuccess(decodedText) {
-            document.getElementById('inputGtin').value = decodedText;
-            if(navigator.vibrate) navigator.vibrate(100);
-            window.buscarNome(); // Já puxa o nome na hora do bipe!
-            
-            // Pausa breve para não bipar 10x seguidas
-            html5QrcodeScanner.pause();
-            setTimeout(() => html5QrcodeScanner.resume(), 3000);
+    <script src="dados.js"></script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        // COLE SUAS CHAVES DO FIREBASE AQUI
+        const firebaseConfig = {
+            apiKey: "AIzaSyA_i9BkvMFIXxTTtJA6dyFc2HLXKP-TmHU",
+            authDomain: "wms-h7.firebaseapp.com",
+            projectId: "wms-h7",
+            storageBucket: "wms-h7.firebasestorage.app",
+            messagingSenderId: "274655939351",
+            appId: "1:274655939351:web:533f7b66d3f421596b8552"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Mapeando os elementos da tela
+        const inputGtin = document.getElementById('gtin');
+        const inputNome = document.getElementById('nomeProduto');
+        const inputVaga = document.getElementById('vaga');
+        const btnSalvar = document.getElementById('btn-salvar');
+        const alerta = document.getElementById('alerta-sistema');
+        const vagaErro = document.getElementById('vaga-erro');
+
+        // Função para achatar a estrutura de vagas para facilitar a busca
+        // Transforma { "A": ["A-1", "A-2"] } em um array único ["A-1", "A-2"]
+        const todasAsVagas = Object.values(estruturaDeposito).flat();
+
+        let produtoValido = false;
+        let vagaValida = false;
+
+        // VALIDAÇÃO EM TEMPO REAL: CÓDIGO DE BARRAS
+        inputGtin.addEventListener('input', (e) => {
+            const codigo = e.target.value;
+            // Busca no dados.js
+            if (catalogoProdutos[codigo]) {
+                inputNome.value = catalogoProdutos[codigo];
+                inputNome.className = "form-control bg-success text-white fw-bold";
+                produtoValido = true;
+            } else {
+                inputNome.value = "Produto não cadastrado";
+                inputNome.className = "form-control bg-danger text-white readonly-field";
+                produtoValido = false;
+            }
+            liberarBotao();
+        });
+
+        // VALIDAÇÃO EM TEMPO REAL: VAGA
+        inputVaga.addEventListener('input', (e) => {
+            const vagaDigitada = e.target.value.toUpperCase();
+            if (todasAsVagas.includes(vagaDigitada)) {
+                vagaErro.classList.add('d-none');
+                inputVaga.classList.remove('is-invalid');
+                inputVaga.classList.add('is-valid');
+                vagaValida = true;
+            } else {
+                vagaErro.classList.remove('d-none');
+                inputVaga.classList.add('is-invalid');
+                inputVaga.classList.remove('is-valid');
+                vagaValida = false;
+            }
+            liberarBotao();
+        });
+
+        // Só libera o botão de salvar se tudo estiver certo
+        function liberarBotao() {
+            btnSalvar.disabled = !(produtoValido && vagaValida);
         }
 
-        let html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 15, qrbox: {width: 250, height: 120} }, false);
-        html5QrcodeScanner.render(onScanSuccess);
-
-        // Disparo do Formulário
-        document.getElementById('formEntrada').addEventListener('submit', async (e) => {
+        // SALVANDO NO FIREBASE (A única vez que usamos a internet)
+        document.getElementById('form-entrada').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const btn = document.getElementById('btnSalvar');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> PROCESSANDO...';
-
-            const dados = {
-                gtin: document.getElementById('inputGtin').value,
-                nome: document.getElementById('inputNome').value,
-                vaga: document.getElementById('inputVaga').value
-            };
+            
+            // Muda o botão para mostrar que está carregando
+            const textoOriginal = btnSalvar.innerHTML;
+            btnSalvar.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Salvando...';
+            btnSalvar.disabled = true;
 
             try {
-                await window.salvarNoFirebase(dados);
-                alert("Salvo com sucesso!");
-                document.getElementById('formEntrada').reset();
-            } catch (erro) {
-                alert("Erro ao gravar: " + erro.message);
+                // Aqui cobramos 1 Gravação (Write) do Firebase
+                await addDoc(collection(db, "inventario_ativo"), {
+                    gtin: inputGtin.value,
+                    vaga_id: inputVaga.value.toUpperCase(),
+                    status: "ocupada",
+                    data_entrada: serverTimestamp()
+                });
+
+                // Mostra mensagem de sucesso verde
+                alerta.className = "alert alert-success mt-3";
+                alerta.innerHTML = `<i class="bi bi-check-circle-fill"></i> Pallet alocado na vaga <b>${inputVaga.value.toUpperCase()}</b>!`;
+                
+                // Limpa o formulário para o próximo bipe
+                document.getElementById('form-entrada').reset();
+                inputNome.value = "";
+                inputNome.className = "form-control readonly-field";
+                inputVaga.classList.remove('is-valid');
+                produtoValido = false;
+                vagaValida = false;
+
+                // Foca de novo no GTIN para o próximo produto
+                inputGtin.focus();
+
+            } catch (error) {
+                console.error("Erro ao salvar: ", error);
+                alerta.className = "alert alert-danger mt-3";
+                alerta.innerHTML = `<i class="bi bi-x-octagon-fill"></i> Erro ao conectar com o servidor.`;
             } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="bi bi-lightning-fill"></i> SALVAR INSTANTÂNEO';
+                btnSalvar.innerHTML = textoOriginal;
+                alerta.classList.remove('d-none');
+                // Esconde o alerta depois de 4 segundos
+                setTimeout(() => alerta.classList.add('d-none'), 4000);
             }
         });
     </script>
