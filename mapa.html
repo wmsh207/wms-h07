@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estrutura Física H-07 | WMS</title>
+    <title>Gêmeo Digital H-07 | Operações</title>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
@@ -11,30 +11,18 @@
     <style>
         body { background-color: #e9ecef; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         .app-header { background-color: #212529; color: white; padding: 15px 0; }
-        
         .corredor-wrapper { background: white; border-radius: 10px; padding: 20px; margin-bottom: 30px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
         .corredor-titulo { border-bottom: 3px solid #0d6efd; padding-bottom: 10px; margin-bottom: 20px; font-weight: 900; color: #212529; display: inline-block; }
         .porta-pallets-scroll { display: flex; overflow-x: auto; padding-bottom: 15px; gap: 8px; }
-        .porta-pallets-scroll::-webkit-scrollbar { height: 10px; }
-        .porta-pallets-scroll::-webkit-scrollbar-thumb { background-color: #adb5bd; border-radius: 5px; }
-
         .modulo { display: flex; flex-direction: column; border-left: 5px solid #2980b9; border-right: 5px solid #2980b9; background-color: #f8f9fa; min-width: 150px; }
         .modulo-header { background-color: #212529; color: #ffc107; text-align: center; font-size: 13px; font-weight: 900; padding: 4px 0; border-bottom: 2px solid #2980b9; }
         .nivel { display: flex; justify-content: space-around; align-items: flex-end; height: 55px; border-bottom: 5px solid #e67e22; padding: 0 5px; padding-bottom: 2px; position: relative; }
         .nivel-tag { position: absolute; left: -22px; bottom: 2px; font-size: 10px; font-weight: bold; color: #2980b9; }
-
-        .vaga-pallet {
-            width: 44%; height: 38px; border-radius: 3px; display: flex; align-items: center; justify-content: center;
-            font-size: 10px; font-weight: bold; color: transparent; cursor: pointer; transition: all 0.2s; position: relative;
-        }
-        
+        .vaga-pallet { width: 44%; height: 38px; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; color: transparent; cursor: pointer; transition: all 0.2s; position: relative; }
         .vaga-pallet.status-ocupada { background-color: #dc3545; border-bottom: 4px solid #8B4513; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
         .vaga-pallet.status-livre { background-color: transparent; border: 1px dashed #ced4da; }
         .vaga-pallet:hover { transform: scale(1.1); color: white; z-index: 10; }
-        .vaga-pallet.status-livre:hover { background-color: #198754; border-color: #198754; }
-
-        .legenda-caixa { font-size: 13px; background: white; border-radius: 8px; border-left: 5px solid #ffc107; }
-        .quadradinho { width: 15px; height: 15px; display: inline-block; border-radius: 2px; vertical-align: middle; }
+        .btn-icone { padding: 4px 10px; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -47,31 +35,39 @@
         </div>
     </header>
 
-    <div class="container-fluid px-4 mb-4">
-        <div class="legenda-caixa p-3 shadow-sm d-flex flex-wrap justify-content-between align-items-center gap-3">
-            <div class="d-flex gap-4">
-                <span><span class="quadradinho" style="border: 1px dashed #999;"></span> Vaga Livre</span>
-                <span><span class="quadradinho bg-danger" style="border-bottom: 3px solid #8B4513;"></span> Pallet Alocado</span>
-            </div>
-            <button id="btn-atualizar" class="btn btn-primary shadow-sm fw-bold">
-                <i class="bi bi-arrow-clockwise"></i> Escanear Depósito
-            </button>
-        </div>
+    <div class="container-fluid px-4 mb-4 text-end">
+        <button id="btn-atualizar" class="btn btn-primary shadow-sm fw-bold">
+            <i class="bi bi-arrow-clockwise"></i> Escanear Depósito
+        </button>
     </div>
 
     <div id="mapa-visual" class="container-fluid px-4"></div>
 
-    <div class="modal fade" id="modalVaga" tabindex="-1" aria-labelledby="modalVagaLabel" aria-hidden="true">
+    <div class="modal fade" id="modalVaga" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow">
-                <div class="modal-header bg-dark text-white border-bottom-0">
-                    <h5 class="modal-title fw-bold" id="modalVagaLabel"><i class="bi bi-geo-alt-fill text-warning"></i> Detalhes da Vaga: <span id="vaga-id-titulo"></span></h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title fw-bold">Vaga: <span id="vaga-id-titulo"></span></h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body bg-light" id="modal-conteudo">
+                <div class="modal-body bg-light px-3" id="modal-conteudo">
                     </div>
-                <div class="modal-footer border-top-0">
-                    <button type="button" class="btn btn-secondary w-100 fw-bold" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalConfirmarExclusao" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-body text-center p-4">
+                    <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size: 4rem;"></i>
+                    <h4 class="fw-bold mt-3 text-dark">Remover Pallet?</h4>
+                    <p class="text-muted small mt-2 mb-4">Esta ação apagará o registro do sistema e liberará a vaga. Essa ação não pode ser desfeita.</p>
+                    
+                    <div class="d-flex justify-content-center gap-2">
+                        <button type="button" class="btn btn-light border fw-bold w-50" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-danger fw-bold w-50" id="btn-executar-exclusao">Sim, Remover</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -82,9 +78,9 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getFirestore, collection, query, where, getDocs, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-        // ⚠️ COLE SUAS CHAVES DO FIREBASE AQUI
+        // CONFIGURAÇÃO DO FIREBASE (COLE A SUA AQUI)
         const firebaseConfig = {
             apiKey: "AIzaSyA_i9BkvMFIXxTTtJA6dyFc2HLXKP-TmHU",
             authDomain: "wms-h7.firebaseapp.com",
@@ -100,151 +96,196 @@
         const container = document.getElementById('mapa-visual');
         const btnAtualizar = document.getElementById('btn-atualizar');
         
-        // Elementos do Modal
+        // Elementos dos Modais
         const modalElement = new bootstrap.Modal(document.getElementById('modalVaga'));
-        const vagaIdTitulo = document.getElementById('vaga-id-titulo');
+        const modalConfirmar = new bootstrap.Modal(document.getElementById('modalConfirmarExclusao'));
         const modalConteudo = document.getElementById('modal-conteudo');
+        const btnExecutarExclusao = document.getElementById('btn-executar-exclusao');
 
-        // BANCO DE DADOS TEMPORÁRIO NA MEMÓRIA
         let conteudoDasVagas = {};
+        const todasAsVagasValidas = Object.values(estruturaDeposito).flat();
+        
+        // Variável para guardar temporariamente qual pallet o usuário quer apagar
+        let palletParaApagar = null;
 
-        // Função que é chamada ao clicar em uma vaga
-        window.abrirDetalhesVaga = function(idVaga) {
-            vagaIdTitulo.innerText = idVaga;
+        // 1. FUNÇÃO: PREPARA A EXCLUSÃO (Abre o Aviso Bonito)
+        window.abrirAvisoRemocao = (docId) => {
+            palletParaApagar = docId; // Guarda o ID na memória
+            modalElement.hide(); // Esconde a janela de detalhes
+            modalConfirmar.show(); // Mostra o alerta vermelho gigante
+        };
+
+        // 2. FUNÇÃO: EXECUTA A EXCLUSÃO DE FATO (Quando clica em "Sim, Remover")
+        btnExecutarExclusao.addEventListener('click', async () => {
+            if(!palletParaApagar) return;
+
+            // Mostra o loading no botão vermelho
+            const textoOriginal = btnExecutarExclusao.innerHTML;
+            btnExecutarExclusao.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Apagando...';
+            btnExecutarExclusao.disabled = true;
+
+            try {
+                await deleteDoc(doc(db, "inventario_ativo", palletParaApagar));
+                modalConfirmar.hide(); // Esconde o alerta
+                desenharMapaRealista(); // Redesenha o mapa atualizado
+            } catch (e) { 
+                alert("Erro ao remover do servidor: " + e.message); 
+            } finally {
+                // Restaura o botão
+                btnExecutarExclusao.innerHTML = textoOriginal;
+                btnExecutarExclusao.disabled = false;
+                palletParaApagar = null;
+            }
+        });
+
+        // 3. FUNÇÃO: MOSTRAR INPUT DE MOVIMENTAÇÃO
+        window.prepararMovimentacao = (docId) => {
+            const painel = document.getElementById(`painel-mover-${docId}`);
+            if (painel.classList.contains('d-none')) {
+                painel.classList.remove('d-none');
+                document.getElementById(`nova-vaga-${docId}`).focus();
+            } else {
+                painel.classList.add('d-none');
+            }
+        };
+
+        // 4. FUNÇÃO: EXECUTAR A TROCA DE VAGA
+        window.executarMovimentacao = async (docId) => {
+            const novaVaga = document.getElementById(`nova-vaga-${docId}`).value.toUpperCase();
             
-            // Se a vaga tiver itens no nosso dicionário de memória
+            if (!todasAsVagasValidas.includes(novaVaga)) {
+                document.getElementById(`erro-vaga-${docId}`).classList.remove('d-none');
+                return;
+            }
+
+            try {
+                const ref = doc(db, "inventario_ativo", docId);
+                await updateDoc(ref, { vaga_id: novaVaga });
+                modalElement.hide();
+                desenharMapaRealista();
+            } catch (e) { alert("Erro ao mover: " + e.message); }
+        };
+
+        // 5. DESENHA A JANELA DE DETALHES (Agora o botão de lixo chama o abrirAvisoRemocao)
+        window.abrirDetalhesVaga = function(idVaga) {
+            document.getElementById('vaga-id-titulo').innerText = idVaga;
+            modalConteudo.innerHTML = '';
+
             if (conteudoDasVagas[idVaga] && conteudoDasVagas[idVaga].length > 0) {
-                let htmlItens = '<div class="list-group shadow-sm">';
-                
                 conteudoDasVagas[idVaga].forEach(item => {
-                    const nomeProduto = catalogoProdutos[item.gtin] || "Produto Não Cadastrado";
+                    const nome = catalogoProdutos[item.gtin] || "Produto Desconhecido";
                     
-                    // Formata a data se existir
                     let dataFormatada = "Data não registrada";
                     if(item.data_entrada && item.data_entrada.toDate) {
                         const d = item.data_entrada.toDate();
                         dataFormatada = d.toLocaleDateString('pt-BR') + ' às ' + d.toLocaleTimeString('pt-BR').substring(0,5);
                     }
 
-                    htmlItens += `
-                        <div class="list-group-item list-group-item-action">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1 fw-bold text-dark">${nomeProduto}</h6>
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'card mb-3 shadow-sm border-0';
+                    itemDiv.innerHTML = `
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="fw-bold mb-1 text-dark">${nome}</h6>
+                                    <div class="text-muted mb-1" style="font-size: 0.8rem;"><i class="bi bi-upc"></i> ${item.gtin}</div>
+                                    <div class="text-success fw-bold" style="font-size: 0.8rem;"><i class="bi bi-clock-history"></i> Entrou: ${dataFormatada}</div>
+                                </div>
+                                <div class="d-flex gap-2 flex-shrink-0 ms-2">
+                                    <button class="btn btn-outline-primary btn-icone rounded-3" onclick="prepararMovimentacao('${item.id}')" title="Mover para outra vaga">
+                                        <i class="bi bi-arrows-move"></i>
+                                    </button>
+                                    <button class="btn btn-outline-danger btn-icone rounded-3" onclick="abrirAvisoRemocao('${item.id}')" title="Remover do sistema">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
                             </div>
-                            <p class="mb-1 text-muted small"><i class="bi bi-upc"></i> ${item.gtin}</p>
-                            <small class="text-success fw-bold"><i class="bi bi-clock-history"></i> Entrou: ${dataFormatada}</small>
+                            
+                            <div id="painel-mover-${item.id}" class="d-none mt-3 pt-3 border-top">
+                                <label class="form-label small fw-bold text-secondary mb-1">Transferir para qual vaga?</label>
+                                <div class="input-group input-group-sm">
+                                    <input type="text" id="nova-vaga-${item.id}" class="form-control text-uppercase" placeholder="Ex: A-1-0-1">
+                                    <button class="btn btn-success fw-bold px-3" onclick="executarMovimentacao('${item.id}')"><i class="bi bi-check2"></i> Salvar</button>
+                                </div>
+                                <small class="text-danger d-none mt-1" id="erro-vaga-${item.id}"><i class="bi bi-exclamation-triangle"></i> Vaga não cadastrada no armazém!</small>
+                            </div>
                         </div>
                     `;
+                    modalConteudo.appendChild(itemDiv);
                 });
-                
-                htmlItens += '</div>';
-                modalConteudo.innerHTML = htmlItens;
             } else {
-                // Se estiver vazia
                 modalConteudo.innerHTML = `
-                    <div class="text-center py-4 text-muted">
-                        <i class="bi bi-box-seam display-4 d-block mb-3 text-secondary opacity-50"></i>
-                        <h5 class="fw-bold">Vaga Vazia</h5>
-                        <p class="mb-0">Não há pallets alocados nesta posição no momento.</p>
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-box-seam display-1 d-block mb-3 opacity-25"></i>
+                        <h5 class="fw-bold">Vaga Livre</h5>
+                        <p class="mb-0">Não há produtos nesta posição.</p>
                     </div>
                 `;
             }
-            
-            // Abre a janela flutuante
             modalElement.show();
         };
 
+        // LÓGICA DE DESENHO DO MAPA (Sem alterações pesadas)
         async function desenharMapaRealista() {
-            const textoOriginal = btnAtualizar.innerHTML;
-            btnAtualizar.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Lendo Estrutura...';
             btnAtualizar.disabled = true;
             container.innerHTML = '';
-            
-            // Limpa a memória toda vez que atualiza o mapa
             conteudoDasVagas = {};
 
             const mapaHierarquico = {};
-
-            Object.keys(estruturaDeposito).forEach(corredor => {
-                mapaHierarquico[corredor] = {};
-                estruturaDeposito[corredor].forEach(idVaga => {
-                    const partes = idVaga.split('-'); 
-                    const mod = parseInt(partes[1]);
-                    const niv = parseInt(partes[2]);
-                    if (!mapaHierarquico[corredor][mod]) mapaHierarquico[corredor][mod] = {};
-                    if (!mapaHierarquico[corredor][mod][niv]) mapaHierarquico[corredor][mod][niv] = [];
-                    mapaHierarquico[corredor][mod][niv].push(idVaga);
+            Object.keys(estruturaDeposito).forEach(letra => {
+                mapaHierarquico[letra] = {};
+                estruturaDeposito[letra].forEach(id => {
+                    const p = id.split('-');
+                    if(!mapaHierarquico[letra][p[1]]) mapaHierarquico[letra][p[1]] = {};
+                    if(!mapaHierarquico[letra][p[1]][p[2]]) mapaHierarquico[letra][p[1]][p[2]] = [];
+                    mapaHierarquico[letra][p[1]][p[2]].push(id);
                 });
             });
 
-            Object.keys(mapaHierarquico).sort().forEach(letraCorredor => {
-                const wrapper = document.createElement('div');
-                wrapper.className = 'corredor-wrapper';
-                wrapper.innerHTML = `<h3 class="corredor-titulo">Corredor ${letraCorredor}</h3>`;
+            Object.keys(mapaHierarquico).sort().forEach(letra => {
+                const wrap = document.createElement('div');
+                wrap.className = 'corredor-wrapper';
+                wrap.innerHTML = `<h3 class="corredor-titulo">Corredor ${letra}</h3>`;
+                const scroll = document.createElement('div');
+                scroll.className = 'porta-pallets-scroll';
                 
-                const scrollArea = document.createElement('div');
-                scrollArea.className = 'porta-pallets-scroll';
-
-                const modulos = mapaHierarquico[letraCorredor];
-                const modulosOrdenados = Object.keys(modulos).sort((a, b) => a - b);
-
-                modulosOrdenados.forEach(modNum => {
-                    const moduloDiv = document.createElement('div');
-                    moduloDiv.className = 'modulo';
-                    moduloDiv.innerHTML = `<div class="modulo-header">${letraCorredor}-${modNum}</div>`;
-
-                    const niveis = modulos[modNum];
-                    const niveisOrdenadosDesc = Object.keys(niveis).sort((a, b) => b - a);
-
-                    niveisOrdenadosDesc.forEach(nivNum => {
-                        const nivelDiv = document.createElement('div');
-                        nivelDiv.className = 'nivel';
-                        nivelDiv.innerHTML = `<div class="nivel-tag">N${nivNum}</div>`;
-
-                        niveis[nivNum].sort().forEach(idVaga => {
-                            const vagaDiv = document.createElement('div');
-                            vagaDiv.className = `vaga-pallet status-livre`; 
-                            vagaDiv.id = `vaga-${idVaga}`;
-                            const posicaoFinal = idVaga.split('-')[3]; 
-                            vagaDiv.innerText = posicaoFinal;
-                            vagaDiv.title = `Clique para ver detalhes`;
-                            
-                            // AQUI ESTÁ A MÁGICA: Adiciona o clique na vaga!
-                            vagaDiv.onclick = () => window.abrirDetalhesVaga(idVaga);
-                            
-                            nivelDiv.appendChild(vagaDiv);
-                        });
-                        moduloDiv.appendChild(nivelDiv);
-                    });
-                    scrollArea.appendChild(moduloDiv);
-                });
-                wrapper.appendChild(scrollArea);
-                container.appendChild(wrapper);
-            });
-
-            try {
-                const q = query(collection(db, "inventario_ativo"), where("status", "==", "ocupada"));
-                const querySnapshot = await getDocs(q);
-                
-                querySnapshot.forEach((doc) => {
-                    const item = doc.data();
+                const modulos = mapaHierarquico[letra];
+                Object.keys(modulos).sort((a,b)=>a-b).forEach(m => {
+                    const modDiv = document.createElement('div');
+                    modDiv.className = 'modulo';
+                    modDiv.innerHTML = `<div class="modulo-header">${letra}-${m}</div>`;
                     
-                    // Salva a informação na nossa memória temporária (aceita múltiplos pallets na mesma vaga)
-                    if (!conteudoDasVagas[item.vaga_id]) conteudoDasVagas[item.vaga_id] = [];
-                    conteudoDasVagas[item.vaga_id].push(item);
-
-                    const vagaNaTela = document.getElementById(`vaga-${item.vaga_id}`);
-                    if (vagaNaTela) {
-                        vagaNaTela.classList.remove('status-livre');
-                        vagaNaTela.classList.add('status-ocupada');
-                    }
+                    const niveis = modulos[m];
+                    Object.keys(niveis).sort((a,b)=>b-a).forEach(n => {
+                        const nivDiv = document.createElement('div');
+                        nivDiv.className = 'nivel';
+                        nivDiv.innerHTML = `<div class="nivel-tag">N${n}</div>`;
+                        
+                        niveis[n].sort().forEach(id => {
+                            const v = document.createElement('div');
+                            v.className = 'vaga-pallet status-livre';
+                            v.id = `vaga-${id}`;
+                            v.onclick = () => window.abrirDetalhesVaga(id);
+                            nivDiv.appendChild(v);
+                        });
+                        modDiv.appendChild(nivDiv);
+                    });
+                    scroll.appendChild(modDiv);
                 });
-            } catch (error) {
-                console.error(error);
-            } finally {
-                btnAtualizar.innerHTML = textoOriginal;
-                btnAtualizar.disabled = false;
-            }
+                wrap.appendChild(scroll);
+                container.appendChild(wrap);
+            });
+
+            const querySnapshot = await getDocs(query(collection(db, "inventario_ativo"), where("status", "==", "ocupada")));
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                data.id = doc.id; 
+                if(!conteudoDasVagas[data.vaga_id]) conteudoDasVagas[data.vaga_id] = [];
+                conteudoDasVagas[data.vaga_id].push(data);
+                const el = document.getElementById(`vaga-${data.vaga_id}`);
+                if(el) { el.classList.remove('status-livre'); el.classList.add('status-ocupada'); }
+            });
+            btnAtualizar.disabled = false;
         }
 
         btnAtualizar.addEventListener('click', desenharMapaRealista);

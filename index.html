@@ -13,7 +13,7 @@
             background-color: #f4f6f9;
         }
         .app-header {
-            background-color: #0d6efd; /* Azul corporativo */
+            background-color: #034EA1; /* Nova cor azul solicitada */
             color: white;
             padding: 20px 0;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
@@ -26,12 +26,22 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.05);
         }
         .menu-card:hover {
-            transform: translateY(-5px); /* Efeito de pular ao passar o mouse */
+            transform: translateY(-5px); 
             box-shadow: 0 8px 15px rgba(0,0,0,0.1);
         }
         .icon-display {
-            font-size: 4rem; /* Tamanho padronizado para os ícones */
+            font-size: 4rem; 
             margin-bottom: 15px;
+        }
+        
+        /* Estilo para a logo ficar proporcional ao lado do texto */
+        .logo-header {
+            height: 50px;
+            width: auto;
+            object-fit: contain;
+            background-color: white; /* Adicionado um fundo branco caso a logo seja vazada */
+            border-radius: 50%; /* Deixa redonda */
+            padding: 2px;
         }
     </style>
 </head>
@@ -39,13 +49,16 @@
 
     <header class="app-header text-center mb-5">
         <div class="container">
-            <h1 class="m-0 fw-bold"><i class="bi bi-box-seam"></i> WMS H-07</h1>
+            <h1 class="m-0 fw-bold d-flex justify-content-center align-items-center gap-3">
+                <img src="logo.png" alt="Logo Supermercado" class="logo-header">
+                WMS H-07
+            </h1>
             <p class="m-0 text-white-50 mt-1">Sistema Integrado de Gestão de Vagas</p>
         </div>
     </header>
 
     <div class="container">
-        <div class="row row-cols-1 row-cols-md-3 g-4">
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
             
             <div class="col">
                 <div class="card menu-card h-100 text-center p-4" onclick="window.location.href='entrada.html'">
@@ -73,9 +86,20 @@
                 <div class="card menu-card h-100 text-center p-4" onclick="window.location.href='mapa.html'">
                     <div class="card-body d-flex flex-column">
                         <i class="bi bi-map-fill icon-display text-warning"></i>
-                        <h4 class="card-title fw-bold">Heat Map</h4>
-                        <p class="card-text text-muted flex-grow-1">Visão global da ocupação e disponibilidade dos corredores.</p>
+                        <h4 class="card-title fw-bold">Mapa</h4>
+                        <p class="card-text text-muted flex-grow-1">Visão global da ocupação e operações de movimentação.</p>
                         <button class="btn btn-warning w-100 mt-3 rounded-pill fw-bold text-dark">Acessar</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="card menu-card h-100 text-center p-4" onclick="window.location.href='ruptura.html'">
+                    <div class="card-body d-flex flex-column">
+                        <i class="bi bi-clipboard-data icon-display" style="color: #6610f2;"></i>
+                        <h4 class="card-title fw-bold">Ruptura</h4>
+                        <p class="card-text text-muted flex-grow-1">Auditoria de gôndola e missão de separação de mercadorias.</p>
+                        <button class="btn w-100 mt-3 rounded-pill fw-bold text-white" style="background-color: #6610f2;">Acessar</button>
                     </div>
                 </div>
             </div>

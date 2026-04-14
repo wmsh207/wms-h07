@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prevenção de Ruptura | WMS H-07</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <style>
+        body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding-bottom: 50px; }
+        .app-header { background-color: #6610f2; color: white; padding: 15px 0; } 
+        
+        .nav-pills .nav-link { color: #6c757d; font-weight: bold; border-radius: 50px; padding: 10px 20px; }
+        .nav-pills .nav-link.active { background-color: #6610f2; color: white; }
+        
+        .item-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-left: 4px solid transparent; transition: all 0.2s; }
+        .item-card:hover { box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        
+        .btn-icone { width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; transition: transform 0.1s; }
+        .btn-icone:active { transform: scale(0.9); }
+        
+        .vaga-badge { background-color: #e9ecef; color: #495057; font-weight: bold; padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; }
+        
+        /* Oculta as áreas de impressão na tela normal */
+        .print-a4, .print-80mm { display: none; }
+
+        /* ========================================== */
+        /* MÁGICA DE IMPRESSÃO DUPLA (A4 vs Elgin 80mm) */
+        /* ========================================== */
+        @media print {
+            body { background: white; padding: 0 !important; margin: 0 !important; }
+            .no-print { display: none !important; }
+            
+            /* Lógica para A4 (Inventário) */
+            body.modo-a4 .print-a4 { display: block !important; }
+            body.modo-a4 .table-secao-header { background-color: #e9ecef !important; -webkit-print-color-adjust: exact; }
+            body.modo-a4 .print-bg-gray { background-color: #f8f9fa !important; -webkit-print-color-adjust: exact; }
+
+            /* Lógica para Cupom Elgin i9 (80mm) */
+            body.modo-80mm {
+                width: 80mm !important; /* Trava a largura pro papel da Elgin */
+                font-family: 'Courier New', Courier, monospace; /* Fonte com espaçamento perfeito pra cupom */
+                color: black !important;
+            }
+            body.modo-80mm .print-80mm { 
+                display: block !important; 
+                width: 100%;
+                font-size: 12px;
+                padding: 0 2mm; /* Margem de segurança pro corte */
+            }
+            /* Linhas pontilhadas clássicas de cupom */
+            .linha-cupom { border-top: 1px dashed black; margin: 8px 0; }
+            .checkbox-cupom { display: inline-block; width: 15px; height: 15px; border: 1px solid black; margin-right: 5px; vertical-align: middle; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="app-header text-center mb-4 no-print">
+        <div class="container d-flex justify-content-between align-items-center">
+            <button class="btn btn-outline-light btn-sm" onclick="window.location.href='index.html'"><i class="bi bi-arrow-left"></i> Voltar</button>
+            <h4 class="m-0 fw-bold"><i class="bi bi-clipboard-data"></i> Ruptura</h4>
+            <div style="width: 70px;"></div> 
+        </div>
+    </header>
+
+    <div class="container no-print">
+        <ul class="nav nav-pills justify-content-center mb-4 gap-2" id="rupturaTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active shadow-sm" id="loja-tab" data-bs-toggle="pill" data-bs-target="#loja" type="button" onclick="carregarAuditoria()"><i class="bi bi-shop"></i> Loja</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link shadow-sm" id="deposito-tab" data-bs-toggle="pill" data-bs-target="#deposito" type="button" onclick="carregarPicking()"><i class="bi bi-box-seam"></i> Depósito</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link shadow-sm" id="relatorio-tab" data-bs-toggle="pill" data-bs-target="#relatorio" type="button" onclick="gerarRelatorio()"><i class="bi bi-printer"></i> Inventário</button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="rupturaTabsContent">
+            
+            <div class="tab-pane fade show active" id="loja" role="tabpanel">
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body">
+                        <label class="form-label fw-bold text-secondary small mb-1"><i class="bi bi-file-earmark-excel text-success"></i> Importar Lista (Cole GTIN, Nome, Estoque, Seção)</label>
+                        <textarea id="texto-importacao" class="form-control mb-2" rows="2" placeholder="Cole aqui as colunas copiadas..."></textarea>
+                        <button class="btn btn-primary btn-sm fw-bold w-100" onclick="importarLista()">Processar Lista</button>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-end mb-2">
+                    <h5 class="fw-bold text-dark m-0">Verificar na Gôndola</h5>
+                    <span class="badge bg-secondary" id="contador-auditoria">0 itens</span>
+                </div>
+                <div id="lista-auditoria"></div>
+            </div>
+
+            <div class="tab-pane fade" id="deposito" role="tabpanel">
+                <button class="btn btn-dark w-100 mb-3 shadow-sm py-2 fw-bold" onclick="imprimirCupom80mm()">
+                    <i class="bi bi-receipt"></i> Imprimir Rota (Bobina 80mm)
+                </button>
+
+                <div class="alert alert-warning border-0 shadow-sm d-flex align-items-center">
+                    <i class="bi bi-exclamation-triangle-fill fs-3 me-3 text-warning"></i>
+                    <div>
+                        <strong>Missão de Separação</strong>
+                        <p class="mb-0 small">Busque nos pallets ou marque como Fantasma.</p>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-end mb-2">
+                    <h5 class="fw-bold text-dark m-0">Lista Ativa</h5>
+                    <span class="badge bg-danger" id="contador-picking">0 itens</span>
+                </div>
+                <div id="lista-picking"></div>
+            </div>
+
+            <div class="tab-pane fade" id="relatorio" role="tabpanel">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center py-5">
+                        <i class="bi bi-clipboard-x text-secondary opacity-50 display-1 mb-3 d-block"></i>
+                        <h4 class="fw-bold">Resumo e Inventário</h4>
+                        <p class="text-muted">Gere o relatório gerencial em folha A4.</p>
+                        <button class="btn btn-dark fw-bold px-4 rounded-pill mt-2" onclick="imprimirRelatorioA4()"><i class="bi bi-printer"></i> Imprimir Relatório (A4)</button>
+                        <hr class="my-4">
+                        <button class="btn btn-outline-danger btn-sm" onclick="limparAuditoriaGeral()"><i class="bi bi-trash"></i> Encerrar Ciclo do Dia</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="print-a4 px-4 pt-4" id="documento-impresso-a4">
+        <div class="text-center mb-4">
+            <h2 class="fw-bold m-0">H-07 | RELATÓRIO DE RUPTURA E INVENTÁRIO</h2>
+            <p class="mb-1">Data: <span id="data-impressao-a4"></span></p>
+        </div>
+
+        <div id="resumo-indicadores"></div>
+
+        <h5 class="fw-bold border-bottom pb-2 mb-3 mt-4">LISTA PARA AJUSTE FÍSICO (FANTASMAS)</h5>
+        
+        <table class="table table-bordered table-sm" style="border: 1px solid #000 !important;">
+            <thead class="table-dark">
+                <tr>
+                    <th style="width: 20%;">GTIN</th>
+                    <th style="width: 50%;">Produto</th>
+                    <th style="width: 15%;" class="text-center">Est. Sist.</th>
+                    <th style="width: 15%;" class="text-center">Est. Físico</th>
+                </tr>
+            </thead>
+            <tbody id="tabela-impressao-a4"></tbody>
+        </table>
+
+        <div class="mt-5" style="display: flex; justify-content: space-between;">
+            <div class="text-center" style="width: 45%; border-top: 1px solid #000; padding-top: 5px;">
+                <small>Responsável Ruptura</small>
+            </div>
+            <div class="text-center" style="width: 45%; border-top: 1px solid #000; padding-top: 5px;">
+                <small>Encarregado Depósito</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="print-80mm" id="cupom-picking-elgin">
+        <div style="text-align: center; font-weight: bold; font-size: 14px;">
+            WMS H-07<br>MISSÃO DE SEPARAÇÃO
+        </div>
+        <div style="text-align: center; font-size: 10px; margin-bottom: 5px;">
+            Data/Hora: <span id="data-hora-cupom"></span>
+        </div>
+        
+        <div id="lista-itens-cupom"></div>
+        
+        <div class="linha-cupom"></div>
+        <div style="text-align: center; font-size: 11px;">
+            Total de Itens: <span id="total-itens-cupom"></span><br>
+            Separador: _______________
+        </div>
+        <div style="text-align: center; font-size: 10px; margin-top: 15px;">
+            ( ) Fim da Rota
+        </div>
+    </div>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="dados.js"></script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        // ⚠️ COLE SUAS CHAVES DO FIREBASE AQUI
+        const firebaseConfig = {
+            apiKey: "AIzaSyA_i9BkvMFIXxTTtJA6dyFc2HLXKP-TmHU",
+            authDomain: "wms-h7.firebaseapp.com",
+            projectId: "wms-h7",
+            storageBucket: "wms-h7.firebasestorage.app",
+            messagingSenderId: "274655939351",
+            appId: "1:274655939351:web:533f7b66d3f421596b8552"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // --- FUNÇÕES DE CONTROLE DE IMPRESSORA ---
+        window.imprimirRelatorioA4 = () => {
+            document.body.className = 'modo-a4'; // Avisa o CSS para mostrar o A4
+            window.print();
+        };
+
+        window.imprimirCupom80mm = () => {
+            document.body.className = 'modo-80mm'; // Avisa o CSS para mostrar o formato Elgin
+            // A data do cupom precisa de hora pra saber quando foi gerado
+            const agora = new Date();
+            document.getElementById('data-hora-cupom').innerText = agora.toLocaleDateString('pt-BR') + ' ' + agora.toLocaleTimeString('pt-BR').substring(0,5);
+            window.print();
+        };
+
+        // --- LÓGICA DO FIREBASE ---
+        window.importarLista = async () => {
+            const texto = document.getElementById('texto-importacao').value;
+            if(!texto.trim()) return alert("Cole os dados primeiro!");
+
+            const linhas = texto.split('\n');
+            let adicionados = 0;
+            document.getElementById('texto-importacao').value = "Processando... aguarde.";
+
+            for(let linha of linhas) {
+                const colunas = linha.split('\t'); 
+                if(colunas.length >= 2) {
+                    const gtin = colunas[0].trim();
+                    const nome = colunas[1].trim();
+                    const estoque = colunas.length >= 3 ? colunas[2].trim() : "0";
+                    const secao = colunas.length >= 4 && colunas[3].trim() !== "" ? colunas[3].trim() : "Geral";
+
+                    if(gtin && nome) {
+                        await addDoc(collection(db, "auditoria_ruptura"), {
+                            gtin: gtin, nome: nome, estoque: estoque, secao: secao, 
+                            status_loja: "pendente", status_deposito: "pendente", data_importacao: new Date()
+                        });
+                        adicionados++;
+                    }
+                }
+            }
+            document.getElementById('texto-importacao').value = "";
+            alert(`${adicionados} itens importados com sucesso!`);
+            carregarAuditoria();
+        };
+
+        window.carregarAuditoria = async () => {
+            const lista = document.getElementById('lista-auditoria');
+            lista.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>';
+            const q = query(collection(db, "auditoria_ruptura"), where("status_loja", "==", "pendente"));
+            const snapshot = await getDocs(q);
+            lista.innerHTML = '';
+            document.getElementById('contador-auditoria').innerText = `${snapshot.size} itens`;
+
+            snapshot.forEach(documento => {
+                const item = documento.data();
+                const div = document.createElement('div');
+                div.className = 'item-card d-flex justify-content-between align-items-center';
+                div.innerHTML = `
+                    <div class="pe-3">
+                        <h6 class="fw-bold mb-1 text-dark" style="font-size: 0.95rem;">${item.nome}</h6>
+                        <div class="text-muted small"><i class="bi bi-upc"></i> ${item.gtin} &nbsp;|&nbsp; Est: <strong class="text-primary">${item.estoque}</strong></div>
+                    </div>
+                    <div class="d-flex gap-2 flex-shrink-0">
+                        <button class="btn btn-outline-success btn-icone" onclick="atualizarStatusLoja('${documento.id}', 'na_loja')"><i class="bi bi-check-lg"></i></button>
+                        <button class="btn btn-outline-danger btn-icone" onclick="atualizarStatusLoja('${documento.id}', 'falta')"><i class="bi bi-x-lg"></i></button>
+                    </div>
+                `;
+                lista.appendChild(div);
+            });
+        };
+
+        window.atualizarStatusLoja = async (id, status) => {
+            await updateDoc(doc(db, "auditoria_ruptura", id), { status_loja: status });
+            carregarAuditoria(); 
+        };
+
+        window.carregarPicking = async () => {
+            const listaTela = document.getElementById('lista-picking');
+            const listaCupom = document.getElementById('lista-itens-cupom'); // Onde os dados da Elgin vão
+            
+            listaTela.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-danger"></div></div>';
+            listaCupom.innerHTML = ''; // Limpa o cupom
+            
+            const q = query(collection(db, "auditoria_ruptura"), where("status_loja", "==", "falta"), where("status_deposito", "==", "pendente"));
+            const snapshot = await getDocs(q);
+            
+            const palletsSnap = await getDocs(query(collection(db, "inventario_ativo"), where("status", "==", "ocupada")));
+            const mapaVagas = {};
+            palletsSnap.forEach(p => {
+                const data = p.data();
+                if(!mapaVagas[data.gtin]) mapaVagas[data.gtin] = [];
+                mapaVagas[data.gtin].push(data.vaga_id);
+            });
+
+            listaTela.innerHTML = '';
+            document.getElementById('contador-picking').innerText = `${snapshot.size} itens`;
+            document.getElementById('total-itens-cupom').innerText = snapshot.size;
+
+            let itensParaCupom = []; // Array para organizar a rota
+
+            snapshot.forEach(documento => {
+                const item = documento.data();
+                const vagasEncontradas = mapaVagas[item.gtin] || [];
+                
+                // --- DESENHA NA TELA (CELULAR) ---
+                let htmlVagas = vagasEncontradas.length > 0 
+                    ? vagasEncontradas.slice(0,3).map(v => `<span class="vaga-badge border border-success text-success"><i class="bi bi-geo-alt-fill"></i> ${v}</span>`).join(' ')
+                    : `<span class="vaga-badge border border-danger text-danger"><i class="bi bi-slash-circle"></i> Sem Pallet</span>`;
+
+                const div = document.createElement('div');
+                div.className = 'item-card d-flex justify-content-between align-items-center';
+                div.style.borderLeftColor = vagasEncontradas.length > 0 ? '#198754' : '#dc3545'; 
+
+                div.innerHTML = `
+                    <div class="pe-3">
+                        <h6 class="fw-bold mb-1 text-dark" style="font-size: 0.95rem;">${item.nome}</h6>
+                        <div class="mb-2">${htmlVagas}</div>
+                        <div class="text-muted small"><i class="bi bi-upc"></i> ${item.gtin} &nbsp;|&nbsp; Est Sist: <strong class="text-dark">${item.estoque}</strong></div>
+                    </div>
+                    <div class="d-flex gap-2 flex-shrink-0">
+                        <button class="btn btn-outline-success btn-icone" onclick="atualizarStatusDeposito('${documento.id}', 'localizado')"><i class="bi bi-box-seam-fill"></i></button>
+                        <button class="btn btn-outline-secondary btn-icone" onclick="atualizarStatusDeposito('${documento.id}', 'fantasma')"><i class="bi bi-x-circle"></i></button>
+                    </div>
+                `;
+                listaTela.appendChild(div);
+
+                // --- PREPARA DADOS PRO CUPOM ELGIN ---
+                // Para o cupom, se tiver vaga, pega a primeira (melhor pro repositor)
+                const vagaPrincipal = vagasEncontradas.length > 0 ? vagasEncontradas[0] : "!!! FANTASMA !!!";
+                itensParaCupom.push({
+                    vaga: vagaPrincipal,
+                    nome: item.nome.substring(0, 30), // Corta o nome grande pra caber no papel de 80mm
+                    gtin: item.gtin,
+                    estoque: item.estoque
+                });
+            });
+
+            // Ordena o cupom por vaga (Cria uma rota de picking lógica)
+            itensParaCupom.sort((a, b) => a.vaga.localeCompare(b.vaga));
+
+            // Desenha os itens no cupom Elgin (um embaixo do outro)
+            itensParaCupom.forEach(i => {
+                listaCupom.innerHTML += `
+                    <div class="linha-cupom"></div>
+                    <div style="font-size: 13px; font-weight: bold; margin-bottom: 2px;">
+                        <span class="checkbox-cupom"></span> [${i.vaga}]
+                    </div>
+                    <div style="font-size: 11px; margin-left: 20px;">
+                        ${i.nome}<br>
+                        GTIN: ${i.gtin}<br>
+                        SISTEMA DIZ TER: ${i.estoque} UN
+                    </div>
+                `;
+            });
+        };
+
+        window.atualizarStatusDeposito = async (id, status) => {
+            await updateDoc(doc(db, "auditoria_ruptura", id), { status_deposito: status });
+            carregarPicking(); 
+        };
+
+        window.gerarRelatorio = async () => {
+            const tabela = document.getElementById('tabela-impressao-a4');
+            tabela.innerHTML = '<tr><td colspan="4" class="text-center">Calculando...</td></tr>';
+            
+            const snapshot = await getDocs(collection(db, "auditoria_ruptura"));
+            let totalImportado = snapshot.size, totalNaLoja = 0, totalNoDeposito = 0, totalInventario = 0;
+            const statsPorSecao = {}, itensAgrupados = {};
+
+            document.getElementById('data-impressao-a4').innerText = new Date().toLocaleDateString('pt-BR');
+
+            snapshot.forEach(docSnap => {
+                const item = docSnap.data();
+                const secaoItem = item.secao || 'Geral';
+                if (!statsPorSecao[secaoItem]) statsPorSecao[secaoItem] = { auditado: 0, loja: 0, deposito: 0, fantasma: 0 };
+                statsPorSecao[secaoItem].auditado++;
+
+                if (item.status_loja === "na_loja") { totalNaLoja++; statsPorSecao[secaoItem].loja++; }
+                if (item.status_deposito === "localizado") { totalNoDeposito++; statsPorSecao[secaoItem].deposito++; }
+                if (item.status_deposito === "fantasma") {
+                    totalInventario++; statsPorSecao[secaoItem].fantasma++;
+                    if (!itensAgrupados[secaoItem]) itensAgrupados[secaoItem] = [];
+                    itensAgrupados[secaoItem].push(item);
+                }
+            });
+
+            // Resumo
+            let htmlIndicadores = `
+                <div style="display: flex; justify-content: space-between; border: 1px solid #000; padding: 15px; margin-bottom: 20px;" class="print-bg-gray">
+                    <div class="text-center" style="width: 25%;"><span style="font-size: 0.85rem;">Total Auditado</span><br><strong style="font-size: 1.5rem;">${totalImportado}</strong></div>
+                    <div class="text-center" style="width: 25%; border-left: 1px solid #dee2e6;"><span style="font-size: 0.85rem;">Loja</span><br><strong style="font-size: 1.5rem;">${totalNaLoja}</strong></div>
+                    <div class="text-center" style="width: 25%; border-left: 1px solid #dee2e6;"><span style="font-size: 0.85rem;">Depósito</span><br><strong style="font-size: 1.5rem;">${totalNoDeposito}</strong></div>
+                    <div class="text-center" style="width: 25%; border-left: 1px solid #dee2e6;"><span style="font-size: 0.85rem; color: #dc3545;">Inventário</span><br><strong style="font-size: 1.5rem; color: #dc3545;">${totalInventario}</strong></div>
+                </div>`;
+
+            if (Object.keys(statsPorSecao).length > 0) {
+                htmlIndicadores += `<h6 class="fw-bold mb-2">RESUMO POR SEÇÃO</h6><table class="table table-bordered table-sm mb-4" style="border: 1px solid #000 !important; font-size: 0.9rem;"><thead class="print-bg-gray"><tr><th>Seção</th><th class="text-center">Auditado</th><th class="text-center text-success">Loja</th><th class="text-center text-primary">Depósito</th><th class="text-center text-danger">Inventário</th></tr></thead><tbody>`;
+                Object.keys(statsPorSecao).sort().forEach(sec => {
+                    const dados = statsPorSecao[sec];
+                    htmlIndicadores += `<tr><td class="fw-bold">${sec}</td><td class="text-center">${dados.auditado}</td><td class="text-center">${dados.loja}</td><td class="text-center">${dados.deposito}</td><td class="text-center fw-bold ${dados.fantasma > 0 ? 'text-danger' : ''}">${dados.fantasma}</td></tr>`;
+                });
+                htmlIndicadores += `</tbody></table>`;
+            }
+            document.getElementById('resumo-indicadores').innerHTML = htmlIndicadores;
+
+            // Lista
+            tabela.innerHTML = '';
+            if (totalInventario === 0) {
+                tabela.innerHTML = '<tr><td colspan="4" class="text-center py-4 fw-bold">Nenhum item fantasma.</td></tr>';
+            } else {
+                Object.keys(itensAgrupados).sort().forEach(nomeDaSecao => {
+                    tabela.innerHTML += `<tr class="table-secao-header"><td colspan="4" class="fw-bold text-uppercase py-2 ps-3" style="border-bottom: 2px solid #000; border-top: 2px solid #000;">SEÇÃO: ${nomeDaSecao}</td></tr>`;
+                    itensAgrupados[nomeDaSecao].forEach(item => {
+                        tabela.innerHTML += `<tr><td class="align-middle">${item.gtin}</td><td class="align-middle">${item.nome}</td><td class="align-middle text-center fw-bold">${item.estoque}</td><td class="align-middle"></td></tr>`;
+                    });
+                });
+            }
+        };
+
+        window.limparAuditoriaGeral = async () => {
+            if(!confirm("Certeza? Apagará a auditoria atual.")) return;
+            const snapshot = await getDocs(collection(db, "auditoria_ruptura"));
+            snapshot.forEach(async (documento) => await deleteDoc(doc(db, "auditoria_ruptura", documento.id)));
+            alert("Sistema limpo.");
+            carregarAuditoria();
+        };
+
+        carregarAuditoria();
+    </script>
+</body>
+</html>
