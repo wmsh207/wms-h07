@@ -3,16 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nova Movimentação | WMS</title>
-    
+    <title>Entrada de Mercadoria | WMS</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    
     <style>
         body { background-color: #f4f6f9; }
         .app-header { background-color: #0d6efd; color: white; padding: 15px 0; }
-        .form-control:focus { border-color: #0d6efd; box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25); }
-        .readonly-field { background-color: #e9ecef; cursor: not-allowed; }
+        .card-entrada { border-radius: 12px; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        
+        /* Ajuste do Leitor de Câmera */
+        #reader { width: 100%; border-radius: 8px; overflow: hidden; border: none !important; }
+        #reader video { object-fit: cover; }
     </style>
 </head>
 <body>
@@ -20,162 +21,180 @@
     <header class="app-header text-center mb-4">
         <div class="container d-flex justify-content-between align-items-center">
             <button class="btn btn-outline-light btn-sm" onclick="window.location.href='index.html'"><i class="bi bi-arrow-left"></i> Voltar</button>
-            <h4 class="m-0"><i class="bi bi-box-arrow-in-right"></i> Entrada</h4>
-            <div style="width: 65px;"></div> </div>
+            <h4 class="m-0"><i class="bi bi-box-arrow-in-down"></i> Nova Entrada</h4>
+            <div style="width: 65px;"></div>
+        </div>
     </header>
 
     <div class="container">
-        <div class="card shadow-sm border-0">
+        <div class="card card-entrada mb-4">
             <div class="card-body p-4">
                 
-                <div id="alerta-sistema" class="alert d-none" role="alert"></div>
-
-                <form id="form-entrada">
-                    
-                    <div class="mb-3">
-                        <label for="gtin" class="form-label fw-bold text-secondary">Código de Barras (GTIN)</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-upc-scan"></i></span>
-                            <input type="number" class="form-control form-control-lg" id="gtin" placeholder="Bipe ou digite..." required autofocus>
-                        </div>
+                <div class="mb-4">
+                    <label class="form-label fw-bold text-secondary">Código do Produto (GTIN)</label>
+                    <div class="input-group input-group-lg shadow-sm">
+                        <span class="input-group-text bg-white"><i class="bi bi-upc"></i></span>
+                        <input type="number" class="form-control border-start-0 border-end-0" id="produto-gtin" placeholder="Bipe o código de barras..." onblur="buscarNomeProduto()">
+                        <button class="btn btn-outline-secondary bg-white border-start-0" type="button" onclick="abrirCamera('produto-gtin')">
+                            <i class="bi bi-upc-scan text-primary fs-4"></i>
+                        </button>
                     </div>
+                    <div id="produto-nome" class="form-text mt-2 fw-bold text-success"></div>
+                </div>
 
-                    <div class="mb-3">
-                        <label for="nomeProduto" class="form-label fw-bold text-secondary">Produto</label>
-                        <input type="text" class="form-control readonly-field" id="nomeProduto" placeholder="Aguardando código..." readonly>
+                <div class="mb-4">
+                    <label class="form-label fw-bold text-secondary">Localização (Vaga / QR Code)</label>
+                    <div class="input-group input-group-lg shadow-sm">
+                        <span class="input-group-text bg-white"><i class="bi bi-geo-alt"></i></span>
+                        <input type="text" class="form-control text-uppercase border-start-0 border-end-0" id="vaga-id" placeholder="Ex: A-1-0-1 ou bipe o QR Code...">
+                        <button class="btn btn-outline-secondary bg-white border-start-0" type="button" onclick="abrirCamera('vaga-id')">
+                            <i class="bi bi-qr-code-scan text-primary fs-4"></i>
+                        </button>
                     </div>
+                    <div id="vaga-erro" class="form-text text-danger d-none"><i class="bi bi-x-circle"></i> Vaga não cadastrada no sistema.</div>
+                </div>
 
-                    <div class="mb-4">
-                        <label for="vaga" class="form-label fw-bold text-secondary">Vaga de Destino</label>
-                        <input type="text" class="form-control form-control-lg text-uppercase" id="vaga" placeholder="Ex: A-1-1-1" required>
-                        <div id="vaga-erro" class="text-danger small mt-1 d-none"><i class="bi bi-exclamation-triangle"></i> Vaga não existe no depósito!</div>
-                    </div>
+                <button id="btn-salvar" class="btn btn-primary btn-lg w-100 fw-bold shadow-sm" onclick="salvarEntrada()">
+                    <i class="bi bi-check2-circle"></i> Alocar Pallet
+                </button>
 
-                    <button type="submit" class="btn btn-primary btn-lg w-100" id="btn-salvar" disabled>
-                        <i class="bi bi-cloud-arrow-up"></i> Confirmar Entrada
-                    </button>
-
-                </form>
             </div>
         </div>
     </div>
 
+    <div class="modal fade" id="modalScanner" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-dark text-white border-0">
+                    <h5 class="modal-title"><i class="bi bi-camera-video"></i> Escanear Código</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" id="btn-fechar-modal-scanner"></button>
+                </div>
+                <div class="modal-body p-0 bg-dark text-center">
+                    <div id="reader"></div>
+                </div>
+                <div class="modal-footer bg-dark border-0">
+                    <p class="text-white-50 small w-100 text-center mb-0">Aponte a câmera para o código de barras ou QR Code.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="dados.js"></script>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-        // COLE SUAS CHAVES DO FIREBASE AQUI
-        const firebaseConfig = {
+        // SUA CONFIGURAÇÃO
+        const firebaseConfig = { 
             apiKey: "AIzaSyA_i9BkvMFIXxTTtJA6dyFc2HLXKP-TmHU",
             authDomain: "wms-h7.firebaseapp.com",
             projectId: "wms-h7",
             storageBucket: "wms-h7.firebasestorage.app",
             messagingSenderId: "274655939351",
             appId: "1:274655939351:web:533f7b66d3f421596b8552"
-        };
-
+         };
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Mapeando os elementos da tela
-        const inputGtin = document.getElementById('gtin');
-        const inputNome = document.getElementById('nomeProduto');
-        const inputVaga = document.getElementById('vaga');
-        const btnSalvar = document.getElementById('btn-salvar');
-        const alerta = document.getElementById('alerta-sistema');
-        const vagaErro = document.getElementById('vaga-erro');
+        // --- LÓGICA DA CÂMERA ---
+        let html5QrCode;
+        let inputDestino = '';
 
-        // Função para achatar a estrutura de vagas para facilitar a busca
-        // Transforma { "A": ["A-1", "A-2"] } em um array único ["A-1", "A-2"]
-        const todasAsVagas = Object.values(estruturaDeposito).flat();
+        window.abrirCamera = (idInput) => {
+            inputDestino = idInput;
+            const modal = new bootstrap.Modal(document.getElementById('modalScanner'));
+            modal.show();
 
-        let produtoValido = false;
-        let vagaValida = false;
+            html5QrCode = new Html5Qrcode("reader");
+            // Se for vaga (QR Code), lê área quadrada. Se for GTIN (Barra), lê área retangular
+            const boxWidth = idInput === 'vaga-id' ? 250 : 250;
+            const boxHeight = idInput === 'vaga-id' ? 250 : 150;
+            
+            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: boxWidth, height: boxHeight } }, onScanSuccess)
+            .catch(err => alert("Erro ao acessar câmera. Permitir acesso é obrigatório."));
+        };
 
-        // VALIDAÇÃO EM TEMPO REAL: CÓDIGO DE BARRAS
-        inputGtin.addEventListener('input', (e) => {
-            const codigo = e.target.value;
-            // Busca no dados.js
-            if (catalogoProdutos[codigo]) {
-                inputNome.value = catalogoProdutos[codigo];
-                inputNome.className = "form-control bg-success text-white fw-bold";
-                produtoValido = true;
-            } else {
-                inputNome.value = "Produto não cadastrado";
-                inputNome.className = "form-control bg-danger text-white readonly-field";
-                produtoValido = false;
-            }
-            liberarBotao();
-        });
-
-        // VALIDAÇÃO EM TEMPO REAL: VAGA
-        inputVaga.addEventListener('input', (e) => {
-            const vagaDigitada = e.target.value.toUpperCase();
-            if (todasAsVagas.includes(vagaDigitada)) {
-                vagaErro.classList.add('d-none');
-                inputVaga.classList.remove('is-invalid');
-                inputVaga.classList.add('is-valid');
-                vagaValida = true;
-            } else {
-                vagaErro.classList.remove('d-none');
-                inputVaga.classList.add('is-invalid');
-                inputVaga.classList.remove('is-valid');
-                vagaValida = false;
-            }
-            liberarBotao();
-        });
-
-        // Só libera o botão de salvar se tudo estiver certo
-        function liberarBotao() {
-            btnSalvar.disabled = !(produtoValido && vagaValida);
+        function onScanSuccess(decodedText, decodedResult) {
+            if (navigator.vibrate) navigator.vibrate(100); 
+            
+            const campo = document.getElementById(inputDestino);
+            campo.value = decodedText.toUpperCase(); // Força maiúsculo pra Vagas
+            
+            html5QrCode.stop().then(() => {
+                document.getElementById('btn-fechar-modal-scanner').click();
+                
+                // Se leu o GTIN, já busca o nome do produto sozinho
+                if(inputDestino === 'produto-gtin') {
+                    window.buscarNomeProduto();
+                    document.getElementById('vaga-id').focus(); // Joga o cursor pra vaga
+                }
+            });
         }
 
-        // SALVANDO NO FIREBASE (A única vez que usamos a internet)
-        document.getElementById('form-entrada').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            // Muda o botão para mostrar que está carregando
-            const textoOriginal = btnSalvar.innerHTML;
-            btnSalvar.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Salvando...';
-            btnSalvar.disabled = true;
+        document.getElementById('modalScanner').addEventListener('hidden.bs.modal', function () {
+            if (html5QrCode && html5QrCode.isScanning) html5QrCode.stop().catch(e => console.log(e));
+        });
+
+        // --- LÓGICA DE VALIDAÇÃO E SALVAMENTO ---
+        const todasAsVagasValidas = Object.values(estruturaDeposito).flat();
+
+        window.buscarNomeProduto = () => {
+            const gtin = document.getElementById("produto-gtin").value;
+            const nomeDiv = document.getElementById("produto-nome");
+            if(gtin && catalogoProdutos[gtin]) {
+                nomeDiv.innerText = `📦 ${catalogoProdutos[gtin]}`;
+                nomeDiv.className = "form-text mt-2 fw-bold text-success";
+            } else if (gtin) {
+                nomeDiv.innerText = "⚠️ Produto não encontrado no catálogo local.";
+                nomeDiv.className = "form-text mt-2 fw-bold text-danger";
+            } else {
+                nomeDiv.innerText = "";
+            }
+        };
+
+        window.salvarEntrada = async () => {
+            const gtin = document.getElementById("produto-gtin").value;
+            const vaga = document.getElementById("vaga-id").value.toUpperCase();
+            const vagaErro = document.getElementById("vaga-erro");
+
+            if (!gtin || !vaga) return alert("Preencha o código do produto e a vaga!");
+
+            if (!todasAsVagasValidas.includes(vaga)) {
+                vagaErro.classList.remove("d-none");
+                return;
+            } else {
+                vagaErro.classList.add("d-none");
+            }
+
+            const btn = document.getElementById("btn-salvar");
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Salvando...';
+            btn.disabled = true;
 
             try {
-                // Aqui cobramos 1 Gravação (Write) do Firebase
                 await addDoc(collection(db, "inventario_ativo"), {
-                    gtin: inputGtin.value,
-                    vaga_id: inputVaga.value.toUpperCase(),
+                    gtin: gtin,
+                    vaga_id: vaga,
                     status: "ocupada",
                     data_entrada: serverTimestamp()
                 });
 
-                // Mostra mensagem de sucesso verde
-                alerta.className = "alert alert-success mt-3";
-                alerta.innerHTML = `<i class="bi bi-check-circle-fill"></i> Pallet alocado na vaga <b>${inputVaga.value.toUpperCase()}</b>!`;
-                
-                // Limpa o formulário para o próximo bipe
-                document.getElementById('form-entrada').reset();
-                inputNome.value = "";
-                inputNome.className = "form-control readonly-field";
-                inputVaga.classList.remove('is-valid');
-                produtoValido = false;
-                vagaValida = false;
-
-                // Foca de novo no GTIN para o próximo produto
-                inputGtin.focus();
+                alert("✅ Pallet alocado com sucesso!");
+                document.getElementById("produto-gtin").value = "";
+                document.getElementById("vaga-id").value = "";
+                document.getElementById("produto-nome").innerText = "";
+                document.getElementById("produto-gtin").focus(); // Volta para o primeiro campo
 
             } catch (error) {
-                console.error("Erro ao salvar: ", error);
-                alerta.className = "alert alert-danger mt-3";
-                alerta.innerHTML = `<i class="bi bi-x-octagon-fill"></i> Erro ao conectar com o servidor.`;
+                console.error("Erro: ", error);
+                alert("Erro ao salvar! Verifique a internet.");
             } finally {
-                btnSalvar.innerHTML = textoOriginal;
-                alerta.classList.remove('d-none');
-                // Esconde o alerta depois de 4 segundos
-                setTimeout(() => alerta.classList.add('d-none'), 4000);
+                btn.innerHTML = '<i class="bi bi-check2-circle"></i> Alocar Pallet';
+                btn.disabled = false;
             }
-        });
+        };
     </script>
 </body>
 </html>
