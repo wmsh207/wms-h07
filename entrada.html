@@ -8,10 +8,14 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
         body { background-color: #f4f6f9; }
-        .app-header { background-color: #0d6efd; color: white; padding: 15px 0; }
+        .app-header { background-color: #034EA1; color: white; padding: 15px 0; }
         .card-entrada { border-radius: 12px; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         
-        /* Ajuste do Leitor de Câmera */
+        /* Ajuste do botão da câmera para ficar sem borda feia */
+        .btn-scanner { cursor: pointer; transition: background-color 0.2s; }
+        .btn-scanner:hover { background-color: #f8f9fa !important; }
+        .btn-scanner:active { background-color: #e9ecef !important; }
+        
         #reader { width: 100%; border-radius: 8px; overflow: hidden; border: none !important; }
         #reader video { object-fit: cover; }
     </style>
@@ -33,11 +37,11 @@
                 <div class="mb-4">
                     <label class="form-label fw-bold text-secondary">Código do Produto (GTIN)</label>
                     <div class="input-group input-group-lg shadow-sm">
-                        <span class="input-group-text bg-white"><i class="bi bi-upc"></i></span>
-                        <input type="number" class="form-control border-start-0 border-end-0" id="produto-gtin" placeholder="Bipe o código de barras..." onblur="buscarNomeProduto()">
-                        <button class="btn btn-outline-secondary bg-white border-start-0" type="button" onclick="abrirCamera('produto-gtin')">
-                            <i class="bi bi-upc-scan text-primary fs-4"></i>
-                        </button>
+                        <span class="input-group-text bg-white border-end-0"><i class="bi bi-upc text-muted"></i></span>
+                        <input type="number" class="form-control border-start-0 border-end-0 shadow-none" id="produto-gtin" placeholder="Bipe o código de barras..." onblur="buscarNomeProduto()">
+                        <span class="input-group-text bg-white border-start-0 btn-scanner" onclick="abrirCamera('produto-gtin')">
+                            <i class="bi bi-upc-scan fs-4 text-primary"></i>
+                        </span>
                     </div>
                     <div id="produto-nome" class="form-text mt-2 fw-bold text-success"></div>
                 </div>
@@ -45,11 +49,11 @@
                 <div class="mb-4">
                     <label class="form-label fw-bold text-secondary">Localização (Vaga / QR Code)</label>
                     <div class="input-group input-group-lg shadow-sm">
-                        <span class="input-group-text bg-white"><i class="bi bi-geo-alt"></i></span>
-                        <input type="text" class="form-control text-uppercase border-start-0 border-end-0" id="vaga-id" placeholder="Ex: A-1-0-1 ou bipe o QR Code...">
-                        <button class="btn btn-outline-secondary bg-white border-start-0" type="button" onclick="abrirCamera('vaga-id')">
-                            <i class="bi bi-qr-code-scan text-primary fs-4"></i>
-                        </button>
+                        <span class="input-group-text bg-white border-end-0"><i class="bi bi-geo-alt text-muted"></i></span>
+                        <input type="text" class="form-control text-uppercase border-start-0 border-end-0 shadow-none" id="vaga-id" placeholder="Ex: A-1-0-1 ou bipe o QR Code...">
+                        <span class="input-group-text bg-white border-start-0 btn-scanner" onclick="abrirCamera('vaga-id')">
+                            <i class="bi bi-qr-code-scan fs-4 text-primary"></i>
+                        </span>
                     </div>
                     <div id="vaga-erro" class="form-text text-danger d-none"><i class="bi bi-x-circle"></i> Vaga não cadastrada no sistema.</div>
                 </div>
@@ -73,7 +77,7 @@
                     <div id="reader"></div>
                 </div>
                 <div class="modal-footer bg-dark border-0">
-                    <p class="text-white-50 small w-100 text-center mb-0">Aponte a câmera para o código de barras ou QR Code.</p>
+                    <p class="text-white-50 small w-100 text-center mb-0">Aponte a câmera para o código ou QR Code.</p>
                 </div>
             </div>
         </div>
@@ -87,7 +91,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-        // SUA CONFIGURAÇÃO
+        // SUA CONFIGURAÇÃO DO FIREBASE (COLE AQUI)
         const firebaseConfig = { 
             apiKey: "AIzaSyA_i9BkvMFIXxTTtJA6dyFc2HLXKP-TmHU",
             authDomain: "wms-h7.firebaseapp.com",
@@ -99,46 +103,49 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // --- LÓGICA DA CÂMERA ---
         let html5QrCode;
         let inputDestino = '';
 
         window.abrirCamera = (idInput) => {
             inputDestino = idInput;
-            const modal = new bootstrap.Modal(document.getElementById('modalScanner'));
+            const modalEl = document.getElementById('modalScanner');
+            const modal = new bootstrap.Modal(modalEl);
             modal.show();
 
-            html5QrCode = new Html5Qrcode("reader");
-            // Se for vaga (QR Code), lê área quadrada. Se for GTIN (Barra), lê área retangular
-            const boxWidth = idInput === 'vaga-id' ? 250 : 250;
-            const boxHeight = idInput === 'vaga-id' ? 250 : 150;
-            
-            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: boxWidth, height: boxHeight } }, onScanSuccess)
-            .catch(err => alert("Erro ao acessar câmera. Permitir acesso é obrigatório."));
+            modalEl.addEventListener('shown.bs.modal', function onModalShown() {
+                modalEl.removeEventListener('shown.bs.modal', onModalShown);
+                if (html5QrCode && html5QrCode.isScanning) return;
+
+                html5QrCode = new Html5Qrcode("reader");
+                const boxW = idInput === 'vaga-id' ? 250 : 250;
+                const boxH = idInput === 'vaga-id' ? 250 : 150;
+                
+                html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: boxW, height: boxH } }, onScanSuccess)
+                .catch(err => { alert("Permita o acesso à câmera."); modal.hide(); });
+            });
         };
 
         function onScanSuccess(decodedText, decodedResult) {
             if (navigator.vibrate) navigator.vibrate(100); 
-            
             const campo = document.getElementById(inputDestino);
-            campo.value = decodedText.toUpperCase(); // Força maiúsculo pra Vagas
+            campo.value = decodedText.toUpperCase(); 
             
-            html5QrCode.stop().then(() => {
-                document.getElementById('btn-fechar-modal-scanner').click();
-                
-                // Se leu o GTIN, já busca o nome do produto sozinho
-                if(inputDestino === 'produto-gtin') {
-                    window.buscarNomeProduto();
-                    document.getElementById('vaga-id').focus(); // Joga o cursor pra vaga
-                }
-            });
+            if (html5QrCode) {
+                html5QrCode.stop().then(() => {
+                    document.getElementById('btn-fechar-modal-scanner').click();
+                    if(inputDestino === 'produto-gtin') {
+                        window.buscarNomeProduto();
+                        document.getElementById('vaga-id').focus(); 
+                    }
+                }).catch(err => console.error(err));
+            }
         }
 
         document.getElementById('modalScanner').addEventListener('hidden.bs.modal', function () {
             if (html5QrCode && html5QrCode.isScanning) html5QrCode.stop().catch(e => console.log(e));
+            html5QrCode = null;
         });
 
-        // --- LÓGICA DE VALIDAÇÃO E SALVAMENTO ---
         const todasAsVagasValidas = Object.values(estruturaDeposito).flat();
 
         window.buscarNomeProduto = () => {
@@ -148,11 +155,9 @@
                 nomeDiv.innerText = `📦 ${catalogoProdutos[gtin]}`;
                 nomeDiv.className = "form-text mt-2 fw-bold text-success";
             } else if (gtin) {
-                nomeDiv.innerText = "⚠️ Produto não encontrado no catálogo local.";
+                nomeDiv.innerText = "⚠️ Produto não encontrado no catálogo.";
                 nomeDiv.className = "form-text mt-2 fw-bold text-danger";
-            } else {
-                nomeDiv.innerText = "";
-            }
+            } else { nomeDiv.innerText = ""; }
         };
 
         window.salvarEntrada = async () => {
@@ -161,13 +166,8 @@
             const vagaErro = document.getElementById("vaga-erro");
 
             if (!gtin || !vaga) return alert("Preencha o código do produto e a vaga!");
-
-            if (!todasAsVagasValidas.includes(vaga)) {
-                vagaErro.classList.remove("d-none");
-                return;
-            } else {
-                vagaErro.classList.add("d-none");
-            }
+            if (!todasAsVagasValidas.includes(vaga)) { vagaErro.classList.remove("d-none"); return; } 
+            else { vagaErro.classList.add("d-none"); }
 
             const btn = document.getElementById("btn-salvar");
             btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Salvando...';
@@ -175,22 +175,15 @@
 
             try {
                 await addDoc(collection(db, "inventario_ativo"), {
-                    gtin: gtin,
-                    vaga_id: vaga,
-                    status: "ocupada",
-                    data_entrada: serverTimestamp()
+                    gtin: gtin, vaga_id: vaga, status: "ocupada", data_entrada: serverTimestamp()
                 });
-
                 alert("✅ Pallet alocado com sucesso!");
                 document.getElementById("produto-gtin").value = "";
                 document.getElementById("vaga-id").value = "";
                 document.getElementById("produto-nome").innerText = "";
-                document.getElementById("produto-gtin").focus(); // Volta para o primeiro campo
-
-            } catch (error) {
-                console.error("Erro: ", error);
-                alert("Erro ao salvar! Verifique a internet.");
-            } finally {
+                document.getElementById("produto-gtin").focus(); 
+            } catch (error) { alert("Erro ao salvar! Verifique a internet."); } 
+            finally {
                 btn.innerHTML = '<i class="bi bi-check2-circle"></i> Alocar Pallet';
                 btn.disabled = false;
             }
