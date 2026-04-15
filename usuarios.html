@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Equipe | WMS H-07</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        
+        body { background-color: #f4f7fe; font-family: 'Inter', sans-serif; padding-bottom: 70px; }
+
+        .main-header {
+            background: linear-gradient(135deg, #034EA1 0%, #007bff 100%);
+            padding: 30px 20px 60px;
+            border-radius: 0 0 35px 35px;
+            color: white;
+            box-shadow: 0 10px 20px rgba(3, 78, 161, 0.15);
+        }
+
+        .content-container { margin-top: -40px; padding: 0 15px; }
+
+        .glass-card {
+            background: #ffffff; border-radius: 20px; border: none;
+            padding: 20px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04); margin-bottom: 20px;
+        }
+
+        .section-title { color: #2b3674; font-weight: 800; font-size: 1.1rem; margin-bottom: 15px; display: flex; align-items: center; border-bottom: 2px solid #e0e5f2; padding-bottom: 10px;}
+        .section-title i { font-size: 1.3rem; margin-right: 8px; }
+
+        .form-label { color: #8f9bba; font-weight: 600; font-size: 0.8rem; margin-left: 5px; margin-bottom: 5px; }
+        .form-control, .form-select { border-radius: 12px; padding: 12px; border: 2px solid #e0e5f2; color: #2b3674; font-weight: 600; }
+        .form-control:focus, .form-select:focus { border-color: #9c27b0; box-shadow: none; background-color: #f8f9ff; }
+        
+        .input-group-text { background: transparent; border: 2px solid #e0e5f2; border-left: none; color: #8f9bba; cursor: pointer; border-radius: 0 12px 12px 0; }
+        .input-group-text:hover { color: #9c27b0; }
+
+        .btn-submit { background: #9c27b0; color: white; border-radius: 12px; padding: 14px; font-weight: 700; border: none; width: 100%; font-size: 1.05rem; transition: all 0.2s; box-shadow: 0 5px 15px rgba(156, 39, 176, 0.3); }
+        .btn-submit:hover { background: #7b1fa2; transform: translateY(-2px); color: white;}
+
+        /* Lista de Usuários */
+        .user-card { background: #f8f9ff; border: 1px solid #e0e5f2; border-radius: 15px; padding: 15px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; transition: all 0.2s; }
+        .user-card:hover { border-color: #9c27b0; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        
+        .user-info-wrapper { display: flex; align-items: center; gap: 15px; }
+        .user-avatar { width: 45px; height: 45px; border-radius: 12px; background: #e0eaff; color: #4318FF; font-weight: 800; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
+        .user-name { font-weight: 800; color: #2b3674; font-size: 0.95rem; margin-bottom: 2px; }
+        .user-login { font-size: 0.75rem; color: #8f9bba; }
+        
+        /* Badges de Cargo */
+        .badge-role { font-size: 0.65rem; font-weight: 800; padding: 4px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .role-gerente { background: #ffebee; color: #d32f2f; }
+        .role-comprador { background: #e8f5e9; color: #2e7d32; }
+        .role-deposito { background: #fff3e0; color: #e65100; }
+        .role-repositor { background: #e1f5fe; color: #0288d1; }
+
+        /* Botões de Ação do Card */
+        .btn-acoes-wrapper { display: flex; gap: 8px; }
+        
+        .btn-remover { background: #ffebee; color: #d32f2f; border: none; border-radius: 10px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .btn-remover:hover { background: #d32f2f; color: white; transform: scale(1.1); }
+
+        .btn-editar { background: #e0eaff; color: #4318FF; border: none; border-radius: 10px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .btn-editar:hover { background: #4318FF; color: white; transform: scale(1.1); }
+
+        /* Animação Modal */
+        .modal-success-icon { font-size: 4rem; color: #9c27b0; animation: scaleIn 0.4s ease-out; }
+        @keyframes scaleIn { 0% { transform: scale(0); } 80% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        
+        .btn-modal-confirmar { background: #9c27b0; color: white; border-radius: 12px; padding: 12px; font-weight: 700; width: 100%; border: none; transition: all 0.2s; }
+    </style>
+</head>
+<body>
+
+    <header class="main-header text-center">
+        <div class="container d-flex justify-content-between align-items-center">
+            <button class="btn btn-link text-white p-0" onclick="window.location.href='index.html'"><i class="bi bi-chevron-left fs-4"></i></button>
+            <h5 class="m-0 fw-bold">Gestão de Equipe</h5>
+            <div style="width: 24px;"></div>
+        </div>
+    </header>
+
+    <div class="container content-container">
+        
+        <div class="glass-card" style="border-left: 5px solid #9c27b0;">
+            <div class="section-title text-purple" style="color: #9c27b0;"><i class="bi bi-person-plus-fill"></i> Cadastrar Colaborador</div>
+            
+            <form id="form-usuario">
+                <div class="mb-3">
+                    <label class="form-label">Nome Completo</label>
+                    <input type="text" class="form-control text-capitalize" id="input-nome" placeholder="Ex: José Daniel" required>
+                </div>
+
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <label class="form-label">Usuário (Login)</label>
+                        <input type="text" class="form-control text-lowercase" id="input-login" placeholder="Ex: jose.daniel" required>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Senha de Acesso</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="input-senha" placeholder="******" style="border-right: none;" required>
+                            <span class="input-group-text" onclick="toggleSenha('input-senha', 'icone-senha')"><i class="bi bi-eye-fill" id="icone-senha"></i></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">Nível de Acesso (Perfil)</label>
+                    <select class="form-select" id="input-perfil">
+                        <option value="repositor" selected>Repositor (Consulta e Ruptura)</option>
+                        <option value="deposito">Depósito (Entrada e Mapa)</option>
+                        <option value="comprador">Comprador (Pedidos de Loja)</option>
+                        <option value="gerente">Gerente (Acesso Total)</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn-submit" id="btn-salvar">Salvar Usuário <i class="bi bi-person-check-fill ms-2"></i></button>
+            </form>
+        </div>
+
+        <div class="glass-card" style="border-left: 5px solid #034EA1;">
+            <div class="section-title mb-3"><i class="bi bi-people-fill text-primary"></i> Usuários Ativos</div>
+            
+            <div id="lista-usuarios">
+                <p class="text-center text-muted small py-4">Carregando equipe...</p>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="modal fade" id="modalSucesso" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content border-0 rounded-4 text-center p-4 shadow-lg">
+                <div class="modal-body p-0">
+                    <i class="bi bi-check-circle-fill modal-success-icon"></i>
+                    <h4 class="fw-bold text-dark mt-3" id="sucesso-titulo">Cadastrado!</h4>
+                    <p class="text-muted mb-4" id="sucesso-texto">Usuário criado e liberado para acesso.</p>
+                    <button type="button" class="btn btn-submit" style="padding: 10px;" data-bs-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalEditarSenha" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content border-0 rounded-4 p-3 shadow-lg">
+                <div class="modal-body p-2">
+                    <div class="text-center mb-3">
+                        <i class="bi bi-shield-lock-fill text-primary" style="font-size: 2.5rem;"></i>
+                        <h5 class="fw-bold text-dark mt-2">Alterar Senha</h5>
+                        <p class="text-muted small" id="nome-edit-senha">Nome do Colaborador</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Nova Senha</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="input-nova-senha" placeholder="Digite a nova senha..." style="border-right: none;" required>
+                            <span class="input-group-text" onclick="toggleSenha('input-nova-senha', 'icone-nova-senha')"><i class="bi bi-eye-fill" id="icone-nova-senha"></i></span>
+                        </div>
+                    </div>
+                    
+                    <div class="row g-2">
+                        <div class="col-5">
+                            <button class="btn btn-light btn-modal-confirmar text-muted bg-light" data-bs-dismiss="modal">Cancelar</button>
+                        </div>
+                        <div class="col-7">
+                            <button class="btn btn-primary btn-modal-confirmar" id="btn-salvar-nova-senha">Atualizar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        // IMPORTANTE: Adicionado o updateDoc na lista de importações para conseguir alterar a senha
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        // ==========================================
+        // 1. VERIFICAÇÃO E CONEXÃO FIREBASE
+        // ==========================================
+        const perfilLogado = (localStorage.getItem('perfilWMS') || "").toLowerCase();
+        if (perfilLogado !== 'gerente') {
+            alert("Acesso Negado. Área restrita.");
+            window.location.href = 'index.html';
+        }
+
+        let db = null;
+        const listaHtml = document.getElementById('lista-usuarios');
+
+        try {
+            const firebaseConfig = {
+                apiKey: "AIzaSyA_i9BkvMFIXxTTtJA6dyFc2HLXKP-TmHU",
+                authDomain: "wms-h7.firebaseapp.com",
+                projectId: "wms-h7",
+                storageBucket: "wms-h7.firebasestorage.app",
+                messagingSenderId: "274655939351",
+                appId: "1:274655939351:web:533f7b66d3f421596b8552"
+            };
+
+            if (firebaseConfig.apiKey === "SUA_API_KEY") {
+                listaHtml.innerHTML = `<p class="text-center text-danger py-4">Chaves do Firebase não configuradas.</p>`;
+            } else {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                iniciarMonitoramento();
+            }
+        } catch (error) {
+            listaHtml.innerHTML = `<p class="text-center text-danger py-4">Erro Crítico: ${error.message}</p>`;
+        }
+
+        const modalSucesso = new bootstrap.Modal(document.getElementById('modalSucesso'));
+        const modalEditar = new bootstrap.Modal(document.getElementById('modalEditarSenha'));
+        let usuarioSendoEditado = null; // Guarda o ID de quem vai trocar a senha
+
+        // ==========================================
+        // 2. MONITORAMENTO DA LISTA
+        // ==========================================
+        function iniciarMonitoramento() {
+            if(!db) return;
+
+            const timeoutConexao = setTimeout(() => {
+                if (listaHtml.innerText.includes("Carregando equipe...")) {
+                    listaHtml.innerHTML = `<p class="text-center text-warning py-4">O banco de dados está demorando a responder.</p>`;
+                }
+            }, 5000);
+
+            onSnapshot(collection(db, "usuarios"), (snapshot) => {
+                clearTimeout(timeoutConexao);
+                const usuarios = [];
+                
+                snapshot.forEach(doc => {
+                    const dados = doc.data();
+                    usuarios.push({ 
+                        id: doc.id, 
+                        nome: dados.nome || "Usuário Sem Nome",
+                        login: dados.login || "sem.login",
+                        perfil: dados.perfil || "repositor",
+                        senha: dados.senha || ""
+                    });
+                });
+                
+                if(usuarios.length === 0) {
+                    listaHtml.innerHTML = `<p class="text-center text-muted small py-4">Nenhum usuário cadastrado.</p>`;
+                    return;
+                }
+
+                usuarios.sort((a, b) => a.nome.localeCompare(b.nome));
+
+                listaHtml.innerHTML = usuarios.map(u => {
+                    let badgeClass = 'role-repositor';
+                    let badgeText = 'Repositor';
+                    if(u.perfil === 'gerente') { badgeClass = 'role-gerente'; badgeText = 'Gerente'; }
+                    else if(u.perfil === 'comprador') { badgeClass = 'role-comprador'; badgeText = 'Comprador'; }
+                    else if(u.perfil === 'deposito') { badgeClass = 'role-deposito'; badgeText = 'Depósito'; }
+
+                    let iniciais = "US";
+                    const partesNome = u.nome.trim().split(" ");
+                    if(partesNome.length >= 2 && partesNome[0] && partesNome[1]) {
+                        iniciais = (partesNome[0][0] + partesNome[1][0]).toUpperCase();
+                    } else if (partesNome[0]) {
+                        iniciais = partesNome[0].substring(0, 2).toUpperCase();
+                    }
+
+                    return `
+                    <div class="user-card shadow-sm border-start border-4" style="border-color: ${u.perfil === 'gerente' ? '#d32f2f' : '#e0e5f2'};">
+                        <div class="user-info-wrapper">
+                            <div class="user-avatar">${iniciais}</div>
+                            <div>
+                                <div class="user-name">${u.nome}</div>
+                                <div class="user-login"><i class="bi bi-person-badge"></i> ${u.login}</div>
+                                <div class="badge-role ${badgeClass} mt-1">${badgeText}</div>
+                            </div>
+                        </div>
+                        <div class="btn-acoes-wrapper">
+                            <button class="btn-editar" onclick="abrirModalEditar('${u.id}', '${u.nome}')" title="Alterar Senha">
+                                <i class="bi bi-key-fill"></i>
+                            </button>
+                            <button class="btn-remover" onclick="excluirUsuario('${u.id}', '${u.nome}')" title="Excluir Usuário">
+                                <i class="bi bi-trash3-fill"></i>
+                            </button>
+                        </div>
+                    </div>`;
+                }).join('');
+                
+            }, (error) => {
+                clearTimeout(timeoutConexao);
+                listaHtml.innerHTML = `<p class="text-center text-danger py-4">Erro de Leitura: ${error.message}</p>`;
+            });
+        }
+
+        // ==========================================
+        // 3. EDITAR SENHA
+        // ==========================================
+        window.abrirModalEditar = (docId, nome) => {
+            usuarioSendoEditado = docId;
+            document.getElementById('nome-edit-senha').innerText = "Colaborador: " + nome;
+            document.getElementById('input-nova-senha').value = ''; // Limpa o campo
+            modalEditar.show();
+        }
+
+        document.getElementById('btn-salvar-nova-senha').addEventListener('click', async () => {
+            const novaSenha = document.getElementById('input-nova-senha').value.trim();
+            const btn = document.getElementById('btn-salvar-nova-senha');
+
+            if (novaSenha.length < 3) {
+                return alert("A senha deve ter pelo menos 3 caracteres.");
+            }
+
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Atualizando...';
+            btn.disabled = true;
+
+            try {
+                // Atualiza APENAS o campo de senha daquele documento no Firebase
+                await updateDoc(doc(db, "usuarios", usuarioSendoEditado), { 
+                    senha: novaSenha 
+                });
+                
+                modalEditar.hide();
+                
+                // Reaproveita o modal de sucesso mudando o texto
+                document.getElementById('sucesso-titulo').innerText = "Senha Atualizada!";
+                document.getElementById('sucesso-texto').innerText = "O colaborador já pode fazer login com a nova senha.";
+                modalSucesso.show();
+
+            } catch (error) {
+                alert("Erro ao alterar senha: " + error.message);
+            } finally {
+                btn.innerHTML = 'Atualizar';
+                btn.disabled = false;
+            }
+        });
+
+        // ==========================================
+        // 4. CADASTRAR E EXCLUIR
+        // ==========================================
+        window.excluirUsuario = async (docId, nome) => {
+            if(!confirm(`Deseja remover o acesso de ${nome}?`)) return;
+            try { await deleteDoc(doc(db, "usuarios", docId)); } 
+            catch(e) { alert("Erro ao excluir: " + e.message); }
+        };
+
+        const form = document.getElementById('form-usuario');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-salvar');
+            const nome = document.getElementById('input-nome').value.trim();
+            const login = document.getElementById('input-login').value.trim().toLowerCase();
+            const senha = document.getElementById('input-senha').value.trim();
+            const perfil = document.getElementById('input-perfil').value;
+
+            btn.disabled = true;
+            try {
+                const q = query(collection(db, "usuarios"), where("login", "==", login));
+                const snap = await getDocs(q);
+                if(!snap.empty) {
+                    alert("Este login já existe!");
+                    btn.disabled = false;
+                    return;
+                }
+
+                await addDoc(collection(db, "usuarios"), { nome, login, senha, perfil });
+                
+                document.getElementById('sucesso-titulo').innerText = "Cadastrado!";
+                document.getElementById('sucesso-texto').innerText = "Usuário criado e liberado para acesso.";
+                modalSucesso.show();
+                
+                form.reset();
+            } catch (error) {
+                alert("Erro ao salvar: " + error.message);
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
+        // Função de mostrar senha que serve para qualquer campo (Cadastro ou Edição)
+        window.toggleSenha = (inputId, iconeId) => {
+            const input = document.getElementById(inputId);
+            const icone = document.getElementById(iconeId);
+            input.type = input.type === "password" ? "text" : "password";
+            icone.classList.toggle("bi-eye-fill");
+            icone.classList.toggle("bi-eye-slash-fill");
+        };
+    </script>
+</body>
+</html>

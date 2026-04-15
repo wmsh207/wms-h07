@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | WMS H-07</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: linear-gradient(135deg, #034EA1 0%, #007bff 100%);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .login-card {
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 40px 30px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Detalhe visual na borda superior */
+        .login-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 6px;
+            background: linear-gradient(90deg, #4318FF, #007bff);
+        }
+
+        /* Estilo da nova Logo em Imagem */
+        .brand-logo {
+            width: 85px; /* Tamanho da logo. Pode aumentar ou diminuir se precisar */
+            height: auto;
+            margin-bottom: 15px;
+            border-radius: 50%; /* Garante que o círculo fique perfeito */
+            box-shadow: 0 8px 15px rgba(227, 6, 19, 0.2); /* Sombra vermelha suave combinando com a logo */
+            transition: transform 0.3s ease;
+        }
+        
+        .brand-logo:hover {
+            transform: scale(1.05); /* Dá um efeitinho de pular quando passa o mouse */
+        }
+
+        .login-title {
+            color: #2b3674;
+            font-weight: 800;
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+
+        .form-label { color: #8f9bba; font-weight: 700; font-size: 0.85rem; margin-left: 5px; }
+        
+        /* NOVO DESIGN DO INPUT GROUP:
+           Agora a borda e o fundo ficam no container pai, 
+           envelopando o ícone e o texto juntos!
+        */
+        .input-group-custom {
+            display: flex;
+            align-items: center;
+            background: #f8f9ff;
+            border: 2px solid #e0e5f2;
+            border-radius: 12px;
+            transition: all 0.2s ease-in-out;
+            overflow: hidden; /* Respeita as bordas arredondadas */
+        }
+
+        /* A mágica: Quando o input ganha foco, a borda do PAI muda de cor */
+        .input-group-custom:focus-within {
+            border-color: #034EA1;
+            background: #ffffff;
+            box-shadow: 0 0 0 4px rgba(3, 78, 161, 0.1); /* Efeito de brilho super suave */
+        }
+
+        /* Tira as bordas nativas de dentro para não conflitar com o pai */
+        .input-group-custom .input-group-text {
+            background: transparent;
+            border: none;
+            color: #8f9bba;
+            padding-right: 5px; /* Aproxima o ícone do texto */
+            transition: color 0.2s;
+        }
+
+        /* Quando o pai tem foco, o ícone muda de cor junto com a borda! */
+        .input-group-custom:focus-within .input-group-text {
+            color: #034EA1;
+        }
+
+        /* Botão do Olhinho */
+        .input-group-custom .olhinho {
+            cursor: pointer;
+            padding-left: 5px;
+            padding-right: 15px;
+        }
+        .input-group-custom .olhinho:hover {
+            color: #4318FF !important;
+        }
+
+        /* O campo de digitação fica invisível, só mostrando o texto */
+        .input-group-custom .form-control {
+            border: none;
+            background: transparent;
+            padding: 14px 10px;
+            color: #2b3674;
+            font-weight: 600;
+            box-shadow: none; /* Tira aquele contorno azul feio do Bootstrap */
+        }
+        
+        .input-group-custom .form-control:focus {
+            box-shadow: none;
+            background: transparent;
+        }
+
+        .btn-login { 
+            background: #034EA1; 
+            color: white; 
+            border-radius: 12px; 
+            padding: 14px; 
+            font-weight: 800; 
+            border: none; 
+            width: 100%; 
+            font-size: 1.1rem; 
+            transition: all 0.2s; 
+            box-shadow: 0 5px 15px rgba(3, 78, 161, 0.3);
+            margin-top: 10px;
+        }
+        .btn-login:hover { background: #023670; transform: translateY(-2px); color: white;}
+
+        #msg-erro { display: none; font-size: 0.85rem; font-weight: 700; border-radius: 8px; }
+    </style>
+</head>
+<body>
+
+    <div class="login-card">
+        <div class="text-center mb-4">
+            <img src="logo.png" alt="Logo H-07" class="brand-logo">
+            <h1 class="login-title">WMS H-07</h1>
+            <p class="text-muted small fw-medium">Faça login para acessar o sistema operacional</p>
+        </div>
+
+        <div class="alert alert-danger p-2 text-center" id="msg-erro"></div>
+
+        <form id="form-login">
+            <div class="mb-3">
+                <label class="form-label">Usuário</label>
+                <div class="input-group-custom">
+                    <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
+                    <input type="text" class="form-control text-lowercase" id="input-login" placeholder="ex: jose.daniel" required>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label">Senha</label>
+                <div class="input-group-custom">
+                    <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+                    <input type="password" class="form-control" id="input-senha" placeholder="••••••••" required>
+                    <span class="input-group-text olhinho" onclick="toggleSenha()"><i class="bi bi-eye-fill" id="icone-senha"></i></span>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-login" id="btn-entrar">Entrar <i class="bi bi-box-arrow-in-right ms-2"></i></button>
+        </form>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        // ==========================================
+        // CONEXÃO COM FIREBASE
+        // ==========================================
+        let db = null;
+        try {
+            const firebaseConfig = {
+                apiKey: "AIzaSyA_i9BkvMFIXxTTtJA6dyFc2HLXKP-TmHU",
+                authDomain: "wms-h7.firebaseapp.com",
+                projectId: "wms-h7",
+                storageBucket: "wms-h7.firebasestorage.app",
+                messagingSenderId: "274655939351",
+                appId: "1:274655939351:web:533f7b66d3f421596b8552"
+            };
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+        } catch (error) {
+            mostrarErro("Erro ao conectar com a nuvem. Contate o suporte.");
+        }
+
+        const msgErro = document.getElementById('msg-erro');
+        
+        function mostrarErro(texto) {
+            msgErro.innerText = texto;
+            msgErro.style.display = 'block';
+        }
+
+        // ==========================================
+        // LOGIN
+        // ==========================================
+        document.getElementById('form-login').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const btn = document.getElementById('btn-entrar');
+            const user = document.getElementById('input-login').value.trim().toLowerCase();
+            const pass = document.getElementById('input-senha').value.trim();
+
+            if(!db) {
+                mostrarErro("Banco de dados não configurado (Faltam as chaves).");
+                return;
+            }
+
+            msgErro.style.display = 'none';
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Autenticando...';
+            btn.disabled = true;
+
+            try {
+                const q = query(collection(db, "usuarios"), where("login", "==", user), where("senha", "==", pass));
+                const snap = await getDocs(q);
+
+                if (snap.empty) {
+                    mostrarErro("Usuário ou senha incorretos.");
+                    btn.innerHTML = 'Entrar <i class="bi bi-box-arrow-in-right ms-2"></i>';
+                    btn.disabled = false;
+                } else {
+                    const userData = snap.docs[0].data();
+                    
+                    localStorage.setItem('usuarioNome', userData.nome);
+                    localStorage.setItem('perfilWMS', userData.perfil);
+
+                    window.location.href = 'index.html';
+                }
+
+            } catch (error) {
+                mostrarErro("Falha na rede: " + error.message);
+                btn.innerHTML = 'Entrar <i class="bi bi-box-arrow-in-right ms-2"></i>';
+                btn.disabled = false;
+            }
+        });
+
+        // Toggle Senha
+        window.toggleSenha = () => {
+            const input = document.getElementById('input-senha');
+            const icone = document.getElementById('icone-senha');
+            input.type = input.type === "password" ? "text" : "password";
+            icone.classList.toggle("bi-eye-fill");
+            icone.classList.toggle("bi-eye-slash-fill");
+        };
+
+        // Limpa acessos anteriores ao carregar a página
+        localStorage.removeItem('usuarioNome');
+        localStorage.removeItem('perfilWMS');
+
+    </script>
+</body>
+</html>
