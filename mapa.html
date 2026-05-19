@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mapa de Vagas | WMS H-07</title>
     
+    <link rel="icon" href="logo.png" type="image/png">
+    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
@@ -20,6 +22,18 @@
             color: white;
             box-shadow: 0 10px 20px rgba(3, 78, 161, 0.15);
         }
+
+        .footer-discreto {
+        text-align: center;
+        padding: 25px 0;
+        margin-top: 40px;
+        font-size: 0.78rem;
+        color: var(--text-muted);
+        letter-spacing: 0.3px;
+        border-top: 1px solid var(--border-color);
+        }
+
+        .brand-logo-mini { width: 45px; border-radius: 50%; border: 2px solid white; background: white; }
         .content-container { margin-top: -40px; padding: 0 15px; }
 
         .glass-card {
@@ -42,18 +56,13 @@
         .vaga-ocupada { background: #d32f2f; box-shadow: 0 4px 6px rgba(211, 47, 47, 0.4); border: 1px solid #b71c1c; }
         .vaga-ocupada:hover { transform: scale(1.1); z-index: 10; }
 
-        /* ==========================================
-           ANIMAÇÃO DE VENCIMENTO PRÓXIMO (< 30 DIAS)
-           ========================================== */
+        /* ANIMAÇÃO ALERTA VENCIMENTO */
         @keyframes pulse-alerta {
             0% { background-color: #d32f2f; transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 82, 82, 0.7); }
             50% { background-color: #ff5252; transform: scale(1.05); box-shadow: 0 0 10px 5px rgba(255, 82, 82, 0.5); border: 2px solid #ffeb3b; }
             100% { background-color: #d32f2f; transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 82, 82, 0); }
         }
-        .vaga-alerta {
-            animation: pulse-alerta 1.5s infinite;
-            z-index: 5;
-        }
+        .vaga-alerta { animation: pulse-alerta 1.5s infinite; z-index: 5; }
 
         /* MODAL PRINCIPAL E CARDS */
         .modal-header-custom { background-color: #2b3674; color: white; padding: 15px 20px; border-radius: 12px 12px 0 0; display: flex; justify-content: space-between; align-items: center; }
@@ -74,23 +83,26 @@
         .btn-excluir-soft { background-color: #ffebee; color: #d32f2f; }
         .btn-excluir-soft:hover { background-color: #d32f2f; color: white; }
 
-        /* MODAIS PEQUENOS */
+        /* MODAIS PEQUENOS E LEGENDA */
         .modal-icon-lg { font-size: 3.5rem; line-height: 1; margin-bottom: 15px; }
         .input-vaga-custom { border: 2px solid #e0e5f2; border-radius: 12px; padding: 15px; font-size: 1.2rem; letter-spacing: 2px; }
         .input-vaga-custom:focus { border-color: #3f51b5; box-shadow: 0 0 0 4px rgba(63, 81, 181, 0.1); }
-
-        /* LEGENDA */
         .legenda-item { font-size: 0.75rem; font-weight: 700; color: #6c757d; display: flex; align-items: center; gap: 5px;}
         .bola { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
     </style>
 </head>
 <body>
 
-    <header class="main-header text-center">
+    <header class="main-header">
         <div class="container d-flex justify-content-between align-items-center">
-            <button class="btn btn-link text-white p-0" onclick="window.location.href='index.html'"><i class="bi bi-chevron-left fs-4"></i></button>
-            <h5 class="m-0 fw-bold">Mapa H-07</h5>
-            <div style="width: 24px;"></div>
+            <button class="btn btn-link text-white p-0" style="width: 32px;" onclick="window.location.href='index.html'">
+                <i class="bi bi-chevron-left fs-4"></i>
+            </button>
+            <div class="d-flex align-items-center gap-2">
+                <img src="logo.png" alt="H-07" class="brand-logo-mini" style="width: 35px;">
+                <h5 class="m-0 fw-bold">Mapa H-07</h5>
+            </div>
+            <div style="width: 32px;"></div>
         </div>
     </header>
 
@@ -113,9 +125,27 @@
         </div>
 
         <div class="glass-card">
-            <div id="grid-mapa" class="corredor-container">
-                <p class="text-center text-muted w-100 py-4">Carregando mapa...</p>
+            
+            <div class="mb-4">
+                <div class="d-flex align-items-center mb-3">
+                    <i class="bi bi-arrow-left-square-fill text-primary fs-4 me-2"></i>
+                    <h5 class="fw-bold text-dark mb-0">Lado Esquerdo <span class="badge bg-light text-secondary ms-2 border" style="font-size: 0.75rem;">Módulos Ímpares</span></h5>
+                </div>
+                <div id="grid-esquerda" class="corredor-container border-bottom pb-4">
+                    <p class="text-muted small">Carregando estrutura...</p>
+                </div>
             </div>
+
+            <div>
+                <div class="d-flex align-items-center mb-3 mt-2">
+                    <i class="bi bi-arrow-right-square-fill text-primary fs-4 me-2"></i>
+                    <h5 class="fw-bold text-dark mb-0">Lado Direito <span class="badge bg-light text-secondary ms-2 border" style="font-size: 0.75rem;">Módulos Pares</span></h5>
+                </div>
+                <div id="grid-direita" class="corredor-container">
+                     <p class="text-muted small">Carregando estrutura...</p>
+                </div>
+            </div>
+
         </div>
 
         <div class="modal fade" id="modalVaga" tabindex="-1" aria-hidden="true">
@@ -136,7 +166,7 @@
             <div class="modal-dialog modal-dialog-centered modal-sm">
                 <div class="modal-content border-0 rounded-4 p-4 shadow-lg text-center">
                     <i class="bi bi-exclamation-triangle-fill text-danger modal-icon-lg"></i>
-                    <h5 class="fw-bold text-dark mb-2">Retirar Produto?</h5>
+                    <h5 class="fw-bold text-dark mb-2">Retirar Pallet?</h5>
                     <p class="text-muted small mb-4">Esta ação vai remover o produto desta vaga no estoque. Deseja continuar?</p>
                     <div class="row g-2">
                         <div class="col-6"><button class="btn btn-light w-100 fw-bold text-muted rounded-3" data-bs-dismiss="modal">Cancelar</button></div>
@@ -150,9 +180,9 @@
             <div class="modal-dialog modal-dialog-centered modal-sm">
                 <div class="modal-content border-0 rounded-4 p-4 shadow-lg text-center">
                     <i class="bi bi-arrow-left-right text-primary modal-icon-lg"></i>
-                    <h5 class="fw-bold text-dark mb-2">Mover Produto</h5>
-                    <p class="text-muted small mb-3">Digite o código do novo endereço:</p>
-                    <input type="text" id="input-nova-vaga" class="form-control text-center text-uppercase fw-bold input-vaga-custom mb-4" placeholder="A-05-02" autocomplete="off">
+                    <h5 class="fw-bold text-dark mb-2">Mover Pallet</h5>
+                    <p class="text-muted small mb-3">Digite o código do novo endereço (Ex: A-1-1-1):</p>
+                    <input type="text" id="input-nova-vaga" class="form-control text-center text-uppercase fw-bold input-vaga-custom mb-4" placeholder="A-1-1-1" autocomplete="off">
                     <div class="row g-2">
                         <div class="col-6"><button class="btn btn-light w-100 fw-bold text-muted rounded-3" data-bs-dismiss="modal">Cancelar</button></div>
                         <div class="col-6"><button class="btn btn-primary w-100 fw-bold rounded-3" id="btn-confirmar-mudanca">Mover</button></div>
@@ -168,7 +198,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, doc, deleteDoc, updateDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
         // === COLOQUE SUAS CHAVES DO FIREBASE AQUI ===
         const firebaseConfig = {
@@ -182,81 +212,150 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        const grid = document.getElementById('grid-mapa');
         const selectCorredor = document.getElementById('select-corredor');
-        
         const modalLista = new bootstrap.Modal(document.getElementById('modalVaga'));
         const modalConfirmarExclusao = new bootstrap.Modal(document.getElementById('modalConfirmarExclusao'));
         const modalMudarVaga = new bootstrap.Modal(document.getElementById('modalMudarVaga'));
         
         let inventarioCache = [];
+        let vagasCache = []; 
         let palletAcaoAtualId = null;
+        let listenerInventario = null; // Variável para controlar o ouvinte do banco
 
-        onSnapshot(collection(db, "inventario_ativo"), (snapshot) => {
-            inventarioCache = [];
-            snapshot.forEach(doc => inventarioCache.push({ id: doc.id, ...doc.data() }));
-            renderizarMapa();
-        });
-
-        selectCorredor.onchange = renderizarMapa;
-
-        function renderizarMapa() {
-            const corredorRef = selectCorredor.value;
-            const vagasNoCorredor = estruturaDeposito[corredorRef] || [];
+        // ==============================================================
+        // PASSO 1: CARREGAR VAGAS COM CACHE DE SESSÃO (ECONOMIA DE LEITURAS)
+        // ==============================================================
+        async function carregarVagas() {
+            const vagasSalvas = sessionStorage.getItem('wms_vagas_cache');
             
-            // LÓGICA DO ALERTA: +30 DIAS DA DATA DE HOJE
-            const dataLimiteVencimento = new Date();
-            dataLimiteVencimento.setDate(dataLimiteVencimento.getDate() + 30);
-            
-            const modulos = {};
-            vagasNoCorredor.forEach(vagaId => {
-                const partes = vagaId.split('-'); 
-                const mod = partes[1] || '1';
-                const nivel = partes[2] || '0';
-                if (!modulos[mod]) modulos[mod] = {};
-                if (!modulos[mod][nivel]) modulos[mod][nivel] = [];
-                modulos[mod][nivel].push(vagaId);
-            });
-
-            const chavesModulos = Object.keys(modulos).sort((a,b) => a - b);
-
-            grid.innerHTML = chavesModulos.map(mod => {
-                const niveis = Object.keys(modulos[mod]).sort((a,b) => a - b);
-                const htmlNiveis = niveis.map(nivel => {
-                    const slots = modulos[mod][nivel].sort();
+            if (vagasSalvas) {
+                // Se já carregou hoje (na sessão), puxa da memória do celular
+                vagasCache = JSON.parse(vagasSalvas);
+                iniciarOuvinteCorredor(); 
+            } else {
+                // Se for a primeira vez abrindo o sistema, puxa do banco (Leitura Única)
+                try {
+                    const querySnapshot = await getDocs(collection(db, "vagas"));
+                    vagasCache = [];
+                    querySnapshot.forEach(doc => {
+                        const dados = doc.data();
+                        vagasCache.push({
+                            id: doc.id,
+                            corredor: dados.corredor || doc.id.split('-')[0],
+                            modulo: dados.modulo || doc.id.split('-')[1],
+                            nivel: dados.nivel || doc.id.split('-')[2],
+                            posicao: dados.vaga_posicao || doc.id.split('-')[3]
+                        });
+                    });
                     
-                    const htmlSlots = slots.map(vagaId => {
-                        // Filtra todos os pallets desta vaga
-                        const itensNaVaga = inventarioCache.filter(i => i.vaga_id === vagaId && i.status === 'ocupada');
-                        
-                        let classe = 'vaga-livre';
-                        
-                        if (itensNaVaga.length > 0) {
-                            classe = 'vaga-ocupada';
-                            
-                            // Verifica se ALGUM dos pallets tem validade menor ou igual a 30 dias
-                            const alertaVencimento = itensNaVaga.some(item => {
-                                if (!item.validade || item.validade === 'N/I') return false;
-                                // Converte string "YYYY-MM-DD" para Date com horário neutro
-                                const dataValidade = new Date(item.validade + 'T12:00:00');
-                                return dataValidade <= dataLimiteVencimento;
-                            });
-                            
-                            if (alertaVencimento) {
-                                classe = 'vaga-ocupada vaga-alerta';
-                            }
-                        }
-                        
-                        return `<div class="vaga-slot ${classe}" onclick="verDetalhes('${vagaId}')"></div>`;
-                    }).join('');
-
-                    return `<div class="rack-level">${htmlSlots}<span class="level-label">N${nivel}</span></div>`;
-                }).join('');
-
-                return `<div class="rack-module"><div class="rack-header">${corredorRef}-${mod}</div><div class="rack-body">${htmlNiveis}</div></div>`;
-            }).join('');
+                    // Salva na memória do navegador para não gastar Firebase ao atualizar a página
+                    sessionStorage.setItem('wms_vagas_cache', JSON.stringify(vagasCache));
+                    iniciarOuvinteCorredor();
+                } catch (e) {
+                    console.error("Erro ao baixar vagas: ", e);
+                }
+            }
         }
 
+        // ==============================================================
+        // PASSO 2: OUVINTE CIRÚRGICO (ESCUTA APENAS O CORREDOR ATUAL)
+        // ==============================================================
+        function iniciarOuvinteCorredor() {
+            const corredorRef = selectCorredor.value;
+            
+            // Se já estava ouvindo outro corredor (Ex: A), desliga a escuta antes de abrir o novo!
+            if (listenerInventario) {
+                listenerInventario(); 
+            }
+
+            // Pede ao banco SÓ os pallets onde a vaga_id começa com o Corredor escolhido (Ex: B-)
+            const q = query(
+                collection(db, "inventario_ativo"), 
+                where("vaga_id", ">=", corredorRef + "-"),
+                where("vaga_id", "<=", corredorRef + "-\uf8ff")
+            );
+
+            listenerInventario = onSnapshot(q, (snapshot) => {
+                inventarioCache = [];
+                snapshot.forEach(doc => inventarioCache.push({ id: doc.id, ...doc.data() }));
+                renderizarMapa();
+            });
+        }
+
+        // Trocou o select box? Muda a escuta do banco de dados na hora
+        selectCorredor.addEventListener('change', iniciarOuvinteCorredor);
+
+        // ==============================================================
+        // PASSO 3: RENDERIZAR O MAPA NA TELA
+        // ==============================================================
+        function renderizarMapa() {
+            const corredorRef = selectCorredor.value;
+            const vagasNoCorredor = vagasCache.filter(v => v.corredor === corredorRef);
+            
+            const modulosEsquerda = {};
+            const modulosDireita = {};
+            
+            // Lógica Ímpar (Esquerda) e Par (Direita)
+            vagasNoCorredor.forEach(vaga => {
+                const modStr = vaga.modulo;
+                const modNum = parseInt(modStr, 10);
+                const nivel = vaga.nivel;
+                
+                if (modNum % 2 !== 0) { 
+                    if (!modulosEsquerda[modStr]) modulosEsquerda[modStr] = {};
+                    if (!modulosEsquerda[modStr][nivel]) modulosEsquerda[modStr][nivel] = [];
+                    modulosEsquerda[modStr][nivel].push(vaga.id);
+                } else { 
+                    if (!modulosDireita[modStr]) modulosDireita[modStr] = {};
+                    if (!modulosDireita[modStr][nivel]) modulosDireita[modStr][nivel] = [];
+                    modulosDireita[modStr][nivel].push(vaga.id);
+                }
+            });
+
+            function construirGrid(modulosObj) {
+                const dataLimiteVencimento = new Date();
+                dataLimiteVencimento.setDate(dataLimiteVencimento.getDate() + 30);
+                
+                const chavesModulos = Object.keys(modulosObj).sort((a,b) => parseInt(a) - parseInt(b));
+                
+                if (chavesModulos.length === 0) return `<p class="text-center text-muted small w-100 py-4">Nenhuma vaga ativa configurada.</p>`;
+
+                return chavesModulos.map(mod => {
+                    const niveis = Object.keys(modulosObj[mod]).sort((a,b) => parseInt(a) - parseInt(b));
+                    
+                    const htmlNiveis = niveis.map(nivel => {
+                        const slots = modulosObj[mod][nivel].sort((a,b) => a.localeCompare(b, undefined, {numeric: true}));
+                        
+                        const htmlSlots = slots.map(vagaId => {
+                            const itensNaVaga = inventarioCache.filter(i => i.vaga_id === vagaId && i.status === 'ocupada');
+                            let classe = 'vaga-livre';
+                            
+                            if (itensNaVaga.length > 0) {
+                                classe = 'vaga-ocupada';
+                                const alertaVencimento = itensNaVaga.some(item => {
+                                    if (!item.validade || item.validade === 'N/I') return false;
+                                    const dataValidade = new Date(item.validade + 'T12:00:00');
+                                    return dataValidade <= dataLimiteVencimento;
+                                });
+                                if (alertaVencimento) classe = 'vaga-ocupada vaga-alerta';
+                            }
+                            return `<div class="vaga-slot ${classe}" onclick="verDetalhes('${vagaId}')"></div>`;
+                        }).join('');
+
+                        return `<div class="rack-level">${htmlSlots}<span class="level-label">N${nivel}</span></div>`;
+                    }).join('');
+
+                    return `<div class="rack-module"><div class="rack-header">${corredorRef}-${mod}</div><div class="rack-body">${htmlNiveis}</div></div>`;
+                }).join('');
+            }
+
+            document.getElementById('grid-esquerda').innerHTML = construirGrid(modulosEsquerda);
+            document.getElementById('grid-direita').innerHTML = construirGrid(modulosDireita);
+        }
+
+        // ==============================================================
+        // PASSO 4: AÇÕES DOS MODAIS
+        // ==============================================================
         window.verDetalhes = (vagaId) => {
             const itensNaVaga = inventarioCache.filter(i => i.vaga_id === vagaId && i.status === 'ocupada');
             
@@ -269,16 +368,15 @@
                 container.innerHTML = itensNaVaga.map(item => {
                     const d = item.data_entrada?.toDate ? item.data_entrada.toDate() : new Date(item.data_entrada);
                     const entrada = d.toLocaleString('pt-BR', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
-                    const nome = catalogoProdutos[item.gtin] || "Desconhecido";
+                    
+                    // Como dados.js foi mantido no head, o catalogoProdutos funciona normalmente
+                    const nome = typeof catalogoProdutos !== 'undefined' && catalogoProdutos[item.gtin] ? catalogoProdutos[item.gtin] : "Produto Desconhecido";
                     const validade = item.validade || 'N/I';
                     
-                    // Colore a validade de vermelho caso esteja muito próxima ou vencida
                     let corValidade = '#6c757d';
                     if (validade !== 'N/I') {
                         const dl = new Date(); dl.setDate(dl.getDate() + 30);
-                        if (new Date(item.validade + 'T12:00:00') <= dl) {
-                            corValidade = '#d32f2f'; // Fica vermelho no texto do modal também
-                        }
+                        if (new Date(item.validade + 'T12:00:00') <= dl) { corValidade = '#d32f2f'; }
                     }
 
                     return `
@@ -290,12 +388,8 @@
                             <div class="pallet-detail-row"><i class="bi bi-clock-history"></i> Entrada: ${entrada}</div>
                         </div>
                         <div class="pallet-actions">
-                            <button class="btn-icon-action btn-mudar-soft" onclick="abrirModalMudar('${item.id}')" title="Mover de Vaga">
-                                <i class="bi bi-arrow-left-right"></i>
-                            </button>
-                            <button class="btn-icon-action btn-excluir-soft" onclick="abrirModalExcluir('${item.id}')" title="Retirar do Estoque">
-                                <i class="bi bi-trash3"></i>
-                            </button>
+                            <button class="btn-icon-action btn-mudar-soft" onclick="abrirModalMudar('${item.id}')" title="Mover de Vaga"><i class="bi bi-arrow-left-right"></i></button>
+                            <button class="btn-icon-action btn-excluir-soft" onclick="abrirModalExcluir('${item.id}')" title="Retirar do Estoque"><i class="bi bi-trash3"></i></button>
                         </div>
                     </div>`;
                 }).join('');
@@ -303,45 +397,41 @@
             modalLista.show();
         };
 
-        window.abrirModalExcluir = (idPallet) => {
-            palletAcaoAtualId = idPallet;
-            modalConfirmarExclusao.show();
-        };
-
+        window.abrirModalExcluir = (idPallet) => { palletAcaoAtualId = idPallet; modalConfirmarExclusao.show(); };
+        
         document.getElementById('btn-confirmar-exclusao').addEventListener('click', async () => {
             const btn = document.getElementById('btn-confirmar-exclusao');
             btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-            
             if (palletAcaoAtualId) {
                 await deleteDoc(doc(db, "inventario_ativo", palletAcaoAtualId));
-                modalConfirmarExclusao.hide();
-                modalLista.hide();
+                modalConfirmarExclusao.hide(); modalLista.hide();
             }
             btn.innerHTML = 'Retirar';
         });
 
-        window.abrirModalMudar = (idPallet) => {
-            palletAcaoAtualId = idPallet;
-            document.getElementById('input-nova-vaga').value = '';
-            modalMudarVaga.show();
-        };
-
+        window.abrirModalMudar = (idPallet) => { palletAcaoAtualId = idPallet; document.getElementById('input-nova-vaga').value = ''; modalMudarVaga.show(); };
+        
         document.getElementById('btn-confirmar-mudanca').addEventListener('click', async () => {
-            const novaVaga = document.getElementById('input-nova-vaga').value.trim().toUpperCase();
             const btn = document.getElementById('btn-confirmar-mudanca');
+            const novaVaga = document.getElementById('input-nova-vaga').value.trim().toUpperCase();
             
             if (!novaVaga) return alert("Digite o código da vaga!");
-
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
             
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
             if (palletAcaoAtualId) {
                 await updateDoc(doc(db, "inventario_ativo", palletAcaoAtualId), { vaga_id: novaVaga });
-                modalMudarVaga.hide();
-                modalLista.hide();
+                modalMudarVaga.hide(); modalLista.hide();
             }
             btn.innerHTML = 'Mover';
         });
 
+        // DÁ O PONTAPÉ INICIAL NO SISTEMA AO ABRIR A PÁGINA
+        carregarVagas();
+
     </script>
+
+    <footer class="footer-discreto">
+        <p>Dúvidas ou Suporte Técnico: José Daniel | Filial 207 - Contato: (12) 99600-1446</p>
+        </footer>
 </body>
 </html>

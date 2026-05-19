@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Vagas | WMS H-07</title>
+    
+    <link rel="icon" href="logo.png" type="image/png">
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <script src="https://unpkg.com/html5-qrcode"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        
+        body { background-color: #f4f7fe; font-family: 'Inter', sans-serif; padding-bottom: 40px; }
+
+        .main-header {
+            background: linear-gradient(135deg, #034EA1 0%, #007bff 100%);
+            padding: 30px 20px 60px;
+            border-radius: 0 0 35px 35px;
+            color: white;
+            box-shadow: 0 10px 20px rgba(3, 78, 161, 0.15);
+        }
+
+        .footer-discreto {
+        text-align: center;
+        padding: 25px 0;
+        margin-top: 40px;
+        font-size: 0.78rem;
+        color: var(--text-muted);
+        letter-spacing: 0.3px;
+        border-top: 1px solid var(--border-color);
+        }
+
+        .brand-logo-mini { width: 45px; border-radius: 50%; border: 2px solid white; background: white; }
+        .content-container { margin-top: -40px; padding: 0 15px; }
+
+        .glass-card { background: #ffffff; border-radius: 20px; border: none; padding: 20px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04); margin-bottom: 20px; }
+        .section-title { color: #2b3674; font-weight: 800; font-size: 1.1rem; margin-bottom: 15px; display: flex; align-items: center; border-bottom: 2px solid #e0e5f2; padding-bottom: 10px;}
+        
+        .form-label { color: #8f9bba; font-weight: 700; font-size: 0.82rem; margin-left: 2px; margin-bottom: 4px; }
+        .form-control, .form-select { border-radius: 12px; padding: 12px; border: 2px solid #e0e5f2; color: #2b3674; font-weight: 700; font-size: 0.95rem; }
+        .form-control:focus, .form-select:focus { border-color: #034EA1; box-shadow: 0 0 0 4px rgba(3, 78, 161, 0.1); }
+
+        .btn-salvar { background: #034EA1; color: white; border-radius: 12px; padding: 14px; font-weight: 800; width: 100%; border: none; transition: all 0.2s; margin-top: 10px;}
+        .btn-salvar:hover { background: #023670; transform: translateY(-2px); color: white;}
+
+        .btn-criar-toggle { background: #ffffff; color: #034EA1; border: 2px dashed #034EA1; border-radius: 15px; padding: 15px; font-weight: 800; width: 100%; transition: all 0.2s; box-shadow: 0 4px 15px rgba(3,78,161,0.05); }
+        .btn-criar-toggle:hover { background: #e0eaff; }
+
+        .preview-box { background: #e0eaff; border: 2px dashed #4318FF; border-radius: 12px; padding: 15px; text-align: center; margin-bottom: 15px; }
+        .preview-text { font-size: 1.6rem; font-weight: 800; color: #4318FF; letter-spacing: 2px; }
+
+        .vagas-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+        .chip-vaga { background: #f8f9ff; border: 1px solid #e0e5f2; padding: 6px 10px; border-radius: 8px; font-weight: 700; color: #2b3674; display: flex; align-items: center; gap: 6px; font-size: 0.9rem; transition: all 0.2s; }
+        .chip-vaga:hover { border-color: #034EA1; box-shadow: 0 4px 10px rgba(3,78,161,0.1); }
+        
+        .btn-icon-sm { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border: none; border-radius: 6px; cursor: pointer; transition: all 0.2s; padding: 0; font-size: 0.9rem; }
+        .btn-edit-chip { background: #e0eaff; color: #034EA1; }
+        .btn-edit-chip:hover { background: #034EA1; color: white; }
+        .btn-delete-chip { background: #ffebee; color: #d32f2f; }
+        .btn-delete-chip:hover { background: #d32f2f; color: white; }
+
+        .modal-icon-lg { font-size: 3.5rem; line-height: 1; margin-bottom: 15px; }
+        
+        .search-container { display: flex; gap: 8px; margin-bottom: 15px; }
+        .btn-camera { background: #034EA1; color: white; border: none; border-radius: 12px; padding: 0 15px; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .btn-camera:hover { background: #023670; }
+        .btn-buscar { background: #2b3674; color: white; border: none; border-radius: 12px; padding: 0 15px; font-size: 1.2rem; font-weight: bold; transition: all 0.2s; }
+        
+        #reader { border: none !important; border-radius: 15px; overflow: hidden; }
+        #reader button { background: #034EA1; color: white; border: none; border-radius: 8px; padding: 8px 15px; margin: 5px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="container d-flex justify-content-between align-items-center">
+            <button class="btn btn-link text-white p-0" style="width: 32px;" onclick="window.location.href='index.html'">
+                <i class="bi bi-chevron-left fs-4"></i>
+            </button>
+            <div class="d-flex align-items-center gap-2">
+                <img src="logo.png" alt="H-07" class="brand-logo-mini" style="width: 35px;">
+                <h5 class="m-0 fw-bold">Gestão de Vagas</h5>
+            </div>
+            <div style="width: 32px;"></div>
+        </div>
+    </header>
+
+    <div class="container content-container">
+        
+        <button class="btn-criar-toggle mb-3" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCriarVaga" aria-expanded="false" aria-controls="collapseCriarVaga">
+            <i class="bi bi-plus-circle-fill me-2"></i> Adicionar Nova Vaga
+        </button>
+
+        <div class="collapse mb-3" id="collapseCriarVaga">
+            <div class="glass-card mb-0" style="border-top: 5px solid #034EA1;">
+                <div class="section-title text-primary"><i class="bi bi-tools me-2"></i> Configurar Endereço</div>
+                <form id="form-vaga">
+                    <div class="row g-2 mb-3">
+                        <div class="col-3"><label class="form-label text-center w-100">Corredor</label><select class="form-select text-center p-2" id="input-corredor" onchange="atualizarPreview()"><option value="A">A</option><option value="B" selected>B</option><option value="C">C</option><option value="D">D</option></select></div>
+                        <div class="col-3"><label class="form-label text-center w-100">Módulo</label><input type="number" class="form-control text-center p-2" id="input-modulo" value="1" min="1" onkeyup="atualizarPreview()" onchange="atualizarPreview()" required></div>
+                        <div class="col-3"><label class="form-label text-center w-100">Nível</label><input type="number" class="form-control text-center p-2" id="input-nivel" value="1" min="0" max="10" onkeyup="atualizarPreview()" onchange="atualizarPreview()" required></div>
+                        <div class="col-3"><label class="form-label text-center w-100">Vaga</label><input type="number" class="form-control text-center p-2" id="input-posicao" value="1" min="1" max="10" onkeyup="atualizarPreview()" onchange="atualizarPreview()" required></div>
+                    </div>
+                    <div class="preview-box"><span class="text-muted small d-block mb-1">Código Estrutural Gerado:</span><div class="preview-text" id="preview-codigo">B-1-1-1</div></div>
+                    <button type="submit" class="btn-salvar" id="btn-salvar-vaga">Salvar Endereço <i class="bi bi-check2-circle ms-1"></i></button>
+                </form>
+            </div>
+        </div>
+
+        <div class="glass-card">
+            <div class="section-title text-primary d-flex justify-content-between">
+                <span><i class="bi bi-search me-2"></i> Localizar Endereço</span>
+                <span class="badge bg-primary rounded-pill" id="total-vagas">0</span>
+            </div>
+
+            <label class="form-label mb-1">Busca Rápida (Exata)</label>
+            <div class="search-container">
+                <input type="text" id="input-busca" class="form-control bg-light text-uppercase fw-bold border-0" placeholder="Ex: A-1-1-1">
+                <button class="btn-buscar" onclick="buscarVagaEspecifica()" title="Pesquisar Vaga" id="btn-buscar-lupa">
+                    <i class="bi bi-search"></i>
+                </button>
+                <button class="btn-camera" onclick="abrirScanner()" title="Escanear Etiqueta">
+                    <i class="bi bi-qr-code-scan"></i>
+                </button>
+            </div>
+
+            <hr class="text-muted opacity-25 my-4">
+
+            <label class="form-label mb-1">Ou listar um corredor inteiro:</label>
+            <div class="input-group mb-4" style="box-shadow: 0 4px 10px rgba(0,0,0,0.02); border-radius: 12px; overflow: hidden;">
+                <select class="form-select bg-light text-muted fw-bold border-0" id="filtro-corredor">
+                    <option value="A">Corredor A</option>
+                    <option value="B">Corredor B</option>
+                    <option value="C">Corredor C</option>
+                    <option value="D">Corredor D</option>
+                </select>
+                <button class="btn btn-outline-primary fw-bold border-0 bg-light" type="button" onclick="carregarCorredor()" id="btn-carregar-corredor">
+                    Carregar
+                </button>
+            </div>
+
+            <div id="lista-vagas" class="vagas-grid pt-2">
+                <div class="text-center text-muted w-100 py-4 small">
+                    <i class="bi bi-info-circle me-1"></i> Utilize a busca ou carregue um corredor.
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="modal fade" id="modalScanner" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden">
+                <div class="modal-header bg-primary text-white border-0">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-camera"></i> Escanear Etiqueta</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-3 bg-light text-center">
+                    <p class="text-muted small mb-2">Aponte a câmera para o código de barras ou QR Code da vaga.</p>
+                    <div id="reader" style="width: 100%;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalSucesso" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content border-0 rounded-4 text-center p-4 shadow-lg">
+                <i class="bi bi-check-circle-fill text-success modal-icon-lg"></i>
+                <h5 class="fw-bold text-dark mt-2" id="msg-sucesso-titulo">Sucesso!</h5>
+                <p class="text-muted small mb-4" id="msg-sucesso-texto">Operação realizada com sucesso.</p>
+                <button type="button" class="btn btn-success w-100 rounded-3 fw-bold" data-bs-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalEditar" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 shadow-lg">
+                <div class="modal-header bg-primary text-white border-0" style="border-radius: 15px 15px 0 0;">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i>Editar Endereço</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="form-editar">
+                    <div class="modal-body p-4 bg-light">
+                        <input type="hidden" id="edit-id-antigo">
+                        <p class="text-muted small mb-3 text-center">Modifique os valores abaixo. Se houver pallets no endereço atual, eles serão movidos para o novo automaticamente.</p>
+                        
+                        <div class="row g-2 mb-3">
+                            <div class="col-3"><label class="form-label text-center w-100">Corredor</label><select class="form-select text-center p-2" id="edit-corredor" onchange="atualizarPreviewEdit()"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></div>
+                            <div class="col-3"><label class="form-label text-center w-100">Mód</label><input type="number" class="form-control text-center p-2" id="edit-modulo" min="1" onkeyup="atualizarPreviewEdit()" onchange="atualizarPreviewEdit()" required></div>
+                            <div class="col-3"><label class="form-label text-center w-100">Nív</label><input type="number" class="form-control text-center p-2" id="edit-nivel" min="0" onkeyup="atualizarPreviewEdit()" onchange="atualizarPreviewEdit()" required></div>
+                            <div class="col-3"><label class="form-label text-center w-100">Vaga</label><input type="number" class="form-control text-center p-2" id="edit-posicao" min="1" onkeyup="atualizarPreviewEdit()" onchange="atualizarPreviewEdit()" required></div>
+                        </div>
+                        <div class="preview-box mb-0 py-2"><span class="text-muted" style="font-size: 0.7rem;">Novo Endereço:</span><div class="preview-text m-0 fs-5" id="preview-codigo-edit">--</div></div>
+                    </div>
+                    <div class="modal-footer border-0 bg-white" style="border-radius: 0 0 15px 15px;">
+                        <button type="button" class="btn btn-light fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary fw-bold" id="btn-salvar-edicao">Salvar Alteração</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        // REMOVIDO o onSnapshot, adicionado getDoc para leituras exatas
+        import { getFirestore, collection, doc, setDoc, deleteDoc, updateDoc, query, where, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        const perfil = localStorage.getItem('perfilWMS');
+        if (!perfil || perfil.toLowerCase() !== 'gerente') {
+            alert("Acesso restrito à Gerência.");
+            window.location.href = 'index.html';
+        }
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA_i9BkvMFIXxTTtJA6dyFc2HLXKP-TmHU",
+            authDomain: "wms-h7.firebaseapp.com",
+            projectId: "wms-h7",
+            storageBucket: "wms-h7.firebasestorage.app",
+            messagingSenderId: "274655939351",
+            appId: "1:274655939351:web:533f7b66d3f421596b8552"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        const modalSucesso = new bootstrap.Modal(document.getElementById('modalSucesso'));
+        const modalEditar = new bootstrap.Modal(document.getElementById('modalEditar'));
+        const modalScanner = new bootstrap.Modal(document.getElementById('modalScanner'));
+        
+        let html5QrcodeScanner = null;
+
+        // ==============================================================
+        // LÓGICA DE BUSCA ECONÔMICA (SOB DEMANDA)
+        // ==============================================================
+
+        // FUNÇÃO DE RENDERIZAR NA TELA
+        function renderizarChips(vagasArray) {
+            const divLista = document.getElementById('lista-vagas');
+            document.getElementById('total-vagas').innerText = vagasArray.length;
+
+            if (vagasArray.length === 0) {
+                divLista.innerHTML = `<p class="text-center text-danger fw-bold w-100 py-3"><i class="bi bi-exclamation-octagon me-2"></i>Nenhuma vaga encontrada.</p>`;
+                return;
+            }
+
+            // Ordena e Desenha
+            vagasArray.sort((a, b) => String(a.idReal).localeCompare(String(b.idReal), undefined, {numeric: true}));
+            
+            divLista.innerHTML = vagasArray.map(vaga => `
+                <div class="chip-vaga">
+                    <span style="min-width: 70px;">
+                        <i class="bi bi-geo-alt-fill text-primary"></i> ${vaga.idReal}
+                    </span>
+                    <div class="d-flex gap-1 ms-2 border-start ps-2">
+                        <button class="btn-icon-sm btn-edit-chip" onclick="abrirModalEdicao('${vaga.idReal}')" title="Editar">
+                            <i class="bi bi-pencil-square"></i>
+                        </button>
+                        <button class="btn-icon-sm btn-delete-chip" onclick="excluirVaga('${vaga.idReal}')" title="Apagar">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 1. BUSCA EXATA (CUSTO: 1 LEITURA)
+        window.buscarVagaEspecifica = async () => {
+            const input = document.getElementById('input-busca');
+            const idBusca = input.value.trim().toUpperCase();
+            const btn = document.getElementById('btn-buscar-lupa');
+            const divLista = document.getElementById('lista-vagas');
+
+            if (!idBusca) return alert("Digite o código da vaga antes de buscar.");
+
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+            divLista.innerHTML = `<div class="text-center text-muted w-100 py-3"><span class="spinner-border spinner-border-sm text-primary"></span></div>`;
+
+            try {
+                // Vai no banco e traz APENAS o documento exato digitado
+                const docRef = doc(db, "vagas", idBusca);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const dados = docSnap.data();
+                    dados.idReal = docSnap.id;
+                    renderizarChips([dados]);
+                } else {
+                    renderizarChips([]); // Zero resultados
+                }
+            } catch (error) {
+                alert("Erro na busca: " + error.message);
+            } finally {
+                btn.innerHTML = '<i class="bi bi-search"></i>';
+            }
+        };
+
+        // Permite apertar ENTER na barra de busca
+        document.getElementById('input-busca').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') buscarVagaEspecifica();
+        });
+
+        // 2. BUSCA POR CORREDOR (CUSTO: LEITURAS SOB DEMANDA)
+        window.carregarCorredor = async () => {
+            const filtro = document.getElementById('filtro-corredor').value;
+            const btn = document.getElementById('btn-carregar-corredor');
+            const divLista = document.getElementById('lista-vagas');
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+            divLista.innerHTML = `<div class="text-center text-muted w-100 py-3"><span class="spinner-border spinner-border-sm text-primary"></span></div>`;
+
+            try {
+                const q = query(
+                    collection(db, "vagas"),
+                    where("__name__", ">=", filtro + "-"),
+                    where("__name__", "<=", filtro + "-\uf8ff")
+                );
+
+                const querySnapshot = await getDocs(q);
+                let vagasCarregadas = [];
+                
+                querySnapshot.forEach((docSnap) => {
+                    const dados = docSnap.data();
+                    dados.idReal = docSnap.id;
+                    vagasCarregadas.push(dados);
+                });
+
+                renderizarChips(vagasCarregadas);
+
+            } catch (error) {
+                alert("Erro ao carregar corredor: " + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Carregar';
+            }
+        };
+
+
+        // ==============================================================
+        // SCANNER DE CÂMERA INTEGRADO
+        // ==============================================================
+        window.abrirScanner = () => {
+            modalScanner.show();
+            setTimeout(() => {
+                html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250} }, false);
+                html5QrcodeScanner.render(
+                    (decodedText) => {
+                        document.getElementById('input-busca').value = decodedText;
+                        html5QrcodeScanner.clear();
+                        modalScanner.hide();
+                        // Aciona a busca exata automaticamente ao bipar
+                        buscarVagaEspecifica();
+                    },
+                    (error) => { }
+                );
+            }, 500);
+        };
+
+        document.getElementById('modalScanner').addEventListener('hidden.bs.modal', function () {
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.clear().catch(error => console.error("Erro câmera", error));
+            }
+        });
+
+        // ==============================================================
+        // CRIAÇÃO E EDIÇÃO (MANTIDOS)
+        // ==============================================================
+        window.atualizarPreview = () => {
+            const corr = document.getElementById('input-corredor').value;
+            const mod = document.getElementById('input-modulo').value || '1';
+            const niv = document.getElementById('input-nivel').value || '1';
+            const pos = document.getElementById('input-posicao').value || '1';
+            document.getElementById('preview-codigo').innerText = `${corr}-${mod}-${niv}-${pos}`;
+        };
+
+        document.getElementById('form-vaga').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-salvar-vaga');
+            const novoId = document.getElementById('preview-codigo').innerText;
+            const partes = novoId.split('-');
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Salvando...';
+
+            try {
+                await setDoc(doc(db, "vagas", novoId), {
+                    id: novoId, corredor: partes[0], modulo: partes[1], nivel: partes[2], vaga_posicao: partes[3], criadoEm: new Date()
+                });
+                
+                document.getElementById('msg-sucesso-titulo').innerText = "Endereço Criado!";
+                document.getElementById('msg-sucesso-texto').innerText = "A vaga foi integrada com sucesso. (Lembre-se de recarregar a lista se quiser visualizá-la).";
+                modalSucesso.show();
+                
+                document.getElementById('input-posicao').value = parseInt(partes[3]) + 1;
+                atualizarPreview();
+            } catch (error) { alert("Erro: " + error.message); } 
+            finally { btn.disabled = false; btn.innerHTML = 'Salvar Endereço <i class="bi bi-check2-circle ms-1"></i>'; }
+        });
+
+        window.abrirModalEdicao = (idVaga) => {
+            const partes = idVaga.split('-');
+            document.getElementById('edit-id-antigo').value = idVaga;
+            document.getElementById('edit-corredor').value = partes[0] || 'A';
+            document.getElementById('edit-modulo').value = partes[1] || '1';
+            document.getElementById('edit-nivel').value = partes[2] || '1';
+            document.getElementById('edit-posicao').value = partes[3] || '1';
+            atualizarPreviewEdit();
+            modalEditar.show();
+        };
+
+        window.atualizarPreviewEdit = () => {
+            const corr = document.getElementById('edit-corredor').value;
+            const mod = document.getElementById('edit-modulo').value || '1';
+            const niv = document.getElementById('edit-nivel').value || '1';
+            const pos = document.getElementById('edit-posicao').value || '1';
+            document.getElementById('preview-codigo-edit').innerText = `${corr}-${mod}-${niv}-${pos}`;
+        };
+
+        document.getElementById('form-editar').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-salvar-edicao');
+            const idAntigo = document.getElementById('edit-id-antigo').value;
+            const novoId = document.getElementById('preview-codigo-edit').innerText;
+            const partes = novoId.split('-');
+
+            if (idAntigo === novoId) { modalEditar.hide(); return; }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Migrando...';
+
+            try {
+                await setDoc(doc(db, "vagas", novoId), {
+                    id: novoId, corredor: partes[0], modulo: partes[1], nivel: partes[2], vaga_posicao: partes[3], atualizadoEm: new Date()
+                });
+
+                const q = query(collection(db, "inventario_ativo"), where("vaga_id", "==", idAntigo));
+                const palletsSnapshot = await getDocs(q);
+                const promessasDeAtualizacao = [];
+                palletsSnapshot.forEach((docPallet) => {
+                    promessasDeAtualizacao.push(updateDoc(doc(db, "inventario_ativo", docPallet.id), { vaga_id: novoId }));
+                });
+                await Promise.all(promessasDeAtualizacao); 
+
+                await deleteDoc(doc(db, "vagas", idAntigo));
+                modalEditar.hide();
+                document.getElementById('msg-sucesso-titulo').innerText = "Vaga Atualizada!";
+                document.getElementById('msg-sucesso-texto').innerText = `Alterado de ${idAntigo} para ${novoId} com sucesso.`;
+                modalSucesso.show();
+                
+                // Se o usuário editou, fazemos uma nova busca automática para ele ver o resultado
+                document.getElementById('input-busca').value = novoId;
+                buscarVagaEspecifica();
+
+            } catch (error) { alert("Erro: " + error.message); } 
+            finally { btn.disabled = false; btn.innerHTML = 'Salvar Alteração'; }
+        });
+
+        window.excluirVaga = async (idVaga) => {
+            if(confirm(`ATENÇÃO: Deseja excluir a estrutura ${idVaga} do sistema?`)) {
+                try { 
+                    await deleteDoc(doc(db, "vagas", idVaga)); 
+                    alert("Vaga excluída. Limpe a busca ou recarregue o corredor.");
+                    // Limpa a tela se o cara acabou de excluir o que tava vendo
+                    document.getElementById('lista-vagas').innerHTML = '';
+                    document.getElementById('total-vagas').innerText = '0';
+                } 
+                catch (e) { alert("Erro ao deletar: " + e.message); }
+            }
+        };
+
+        atualizarPreview();
+    </script>
+
+    <footer class="footer-discreto">
+        <p>Dúvidas ou Suporte Técnico: José Daniel | Filial 207 - Contato: (12) 99600-1446</p>
+        </footer>
+</body>
+</html>
